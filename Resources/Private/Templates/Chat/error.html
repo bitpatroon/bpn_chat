@@ -1,0 +1,15 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      xmlns:vt="http://typo3.org/ns/BPN/BpnVariableText/ViewHelpers"
+      data-namespace-typo3-fluid="true"
+      lang="en">
+<f:layout name="Default"/>
+
+<f:section name="main">
+    <div class="not-allowed alert alert-danger">
+        <i class="fa fa-exclamation-circle"></i>
+        <f:if condition="{key}"><f:translate key="{key}"/></f:if>
+        <f:if condition="{message}">{message}</f:if>
+        <f:if condition="{errorCode}">[{errorCode}]</f:if>
+    </div>
+</f:section>
+</html>

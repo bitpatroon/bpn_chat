@@ -1,0 +1,12 @@
+# Configuration/Services.yaml
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    BPN\BpnChat\:
+        resource: '../Classes/*'
+
+    BPN\BpnChat\Domain\Repository\FrontendUserRepository:
+        public: true

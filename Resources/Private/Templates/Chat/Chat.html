@@ -1,0 +1,95 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      xmlns:vt="http://typo3.org/ns/BPN/BpnVariableText/ViewHelpers"
+      xmlns:chat="http://typo3.org/ns/BPN/BpnChat/ViewHelpers"
+      data-namespace-typo3-fluid="true"
+      lang="en">
+<f:layout name="Default"/>
+
+<f:section name="main">
+    <f:variable name="current_user_id"><f:cObject typoscriptObjectPath="lib.userid"/></f:variable>
+    <f:debug title="public\typo3conf\ext\bpn_chat\Resources\Private\Templates\Chat\Chat.html">{_all}</f:debug>
+    <f:form class="card"
+            action="addMessage"
+            name="message"
+            objectName="{message}"
+            object="message">
+        <div class="card-header"><i class="fa fa-comments"></i>&nbsp;Chat</div>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item">### OTHER PARTY</li>
+
+            <f:variable name="last_day">0</f:variable>
+            <f:for each="{messages}"
+                   as="message">
+                <f:variable name="current_day">{f:format.date(date: message.crdate, format: 'd-m-Y')}</f:variable>
+                <f:if condition="{current_day} != {last_day}">
+                    <li class="list-group-item">
+                        <h4 class="mt-4">{f:format.date(date: message.crdate, format: 'd-m-Y')}</h4>
+                    </li>
+                </f:if>
+                <f:variable name="sendByMe">{f:if(condition:'{message.sender.uid} == {current_user_id}', then:1, else:'')}</f:variable>
+                <li class="list-group-item">
+                    <f:render section="message"
+                              arguments="{sendByMe: sendByMe, message:message}"/>
+                </li>
+                <f:variable name="last_day">{f:format.date(date: message.crdate, format: 'd-m-Y')}</f:variable>
+            </f:for>
+            <li class="list-group-item">
+                <div class="form-row">
+                    <div class="col">
+                        <f:form.textarea id="message"
+                                         name="message"
+                                         value=""
+                                         class="form-control"
+                                         property="message"
+                                         placeholder="{f:translate(key:'your_message_here')}"/>
+                    </div>
+                    <div class="md-col-2">
+                        <f:form.submit class="btn btn-primary"
+                                       name="send"
+                                       value="{f:translate(key:'send_message')}" />
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <f:form.hidden name="receiver" value="{receiver}"/>
+    </f:form>
+</f:section>
+
+<f:section name="message">
+    <f:if condition="{sendByMe}">
+        <f:then>
+            <div class="row">
+                <div class="col-3"></div>
+                <div class="col-9 text-right">
+                    <f:format.html>{message.message}</f:format.html>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 text-right">
+                    <small>{f:format.date(date: message.crdate, format: 'd-m-Y H:i')} |
+                        <f:variable name="yourName"><f:translate key="you"/></f:variable>
+                        <chat:friendlyUserName
+                            userid="{message.sender.uid}"
+                            fallback="{'admin' : settings.receivers}"
+                            fallbackifself="{yourName}" />
+                    </small>
+                </div>
+            </div>
+        </f:then>
+        <f:else>
+            <div class="row">
+                <div class="col-9 text-left">
+                    <f:format.html>{message.message}</f:format.html>
+                </div>
+                <div class="col-3"></div>
+            </div>
+            <div class="row">
+                <div class="col-12 text-left"><small>{f:format.date(date: message.crdate, format: 'd-m-Y H:i')} |
+                    <chat:friendlyUserName userid="{message.sender.uid}" fallback="{'admin' : settings.receivers}"/></small>
+                </div>
+            </div>
+        </f:else>
+    </f:if>
+</f:section>
+
+</html>

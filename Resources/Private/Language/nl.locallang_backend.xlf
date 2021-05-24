@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="1.0" standalone="yes">
+  <file source-language="en" datatype="plaintext" original="messages" data="2021-05-11T14:42:00" product-name="bpn_chat">
+    <header/>
+    <body>
+      <trans-unit id="tx_bpnchat_domain_model_message" xml:space="preserve">
+        <source>Chat message</source>
+        <target>Chat bericht</target>
+      </trans-unit>
+      <trans-unit id="tx_bpnchat_domain_model_message.sender" xml:space="preserve">
+        <source>Sender</source>
+        <target>Afzender</target>
+      </trans-unit>
+      <trans-unit id="tx_bpnchat_domain_model_message.receiver" xml:space="preserve">
+        <source>Receiver</source>
+        <target>Ontvanger</target>
+      </trans-unit>
+      <trans-unit id="tx_bpnchat_domain_model_message.message" xml:space="preserve">
+        <source>Message</source>
+        <target>Bericht</target>
+      </trans-unit>
+      <trans-unit id="tx_bpnchat_domain_model_message.delivered" xml:space="preserve">
+        <source>Delivered (at)</source>
+        <target>Afgeleverd (op)</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
