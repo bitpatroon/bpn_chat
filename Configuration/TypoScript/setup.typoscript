@@ -1,0 +1,12 @@
+plugin.bpnchat_chat {
+    settings {
+
+    }
+}
+
+lib.userid  = TEXT
+lib.userid.data = TSFE:fe_user|user|uid
+
+lib.user_friendlyname = USER_INT
+lib.user_friendlyname.userFunc = BPN\BpnChat\UserFunctions\FirendlyUserName->render
+

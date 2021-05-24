@@ -1,0 +1,24 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      xmlns:vt="http://typo3.org/ns/BPN/BpnVariableText/ViewHelpers"
+      xmlns:chat="http://typo3.org/ns/BPN/BpnChat/ViewHelpers"
+      data-namespace-typo3-fluid="true"
+      lang="en">
+<f:layout name="Default"/>
+
+<f:section name="main">
+    <f:debug title="public\typo3conf\ext\bpn_chat\Resources\Private\Templates\Chat\Index.html">{_all}</f:debug>
+    <f:if condition="{chats}">
+        <ul>
+            <f:for each="{chats}"
+                   as="chat">
+                <li>
+                    <f:link.action action="chat"
+                                   arguments="{userId: chat.uid }">{chat.username}
+                    </f:link.action>
+                </li>
+            </f:for>
+        </ul>
+    </f:if>
+</f:section>
+
+</html>

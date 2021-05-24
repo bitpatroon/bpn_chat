@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="1.0" standalone="yes">
+  <file source-language="en" datatype="plaintext" original="messages" data="2021-05-11T14:42:00" product-name="bpn_chat">
+    <header/>
+    <body>
+      <trans-unit id="your_message_here" xml:space="preserve">
+        <source>Your messages here</source>
+        <target>Uw bericht</target>
+      </trans-unit>
+      <trans-unit id="send_message" xml:space="preserve">
+        <source>Send</source>
+        <target>Verzender</target>
+      </trans-unit>
+      <trans-unit id="not_allowed" xml:space="preserve">
+        <source>Chatting is only allowed when logged in.</source>
+        <target>Chatten mag alleen als u bent ingelogd.</target>
+      </trans-unit>
+      <trans-unit id="no_receivers_set" xml:space="preserve">
+        <source>This plugin is not configured correctly. It is lacking the default receivers.</source>
+        <target>De plugin is niet correct geconfigureerd. Er zijn geen standaard ontvangers ingesteld.</target>
+      </trans-unit>
+      <trans-unit id="you" xml:space="preserve">
+        <source>You</source>
+        <target>U</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
