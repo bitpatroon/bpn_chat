@@ -23,6 +23,10 @@
         <source>You</source>
         <target>U</target>
       </trans-unit>
+      <trans-unit id="admin.name" xml:space="preserve">
+        <source>Administrator</source>
+        <target>Beheerder</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

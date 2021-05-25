@@ -27,7 +27,6 @@
 
 namespace BPN\BpnChat\Traits;
 
-use RuntimeException;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
@@ -35,13 +34,17 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 trait LanguageTrait
 {
     /** @var LanguageService */
-    protected $languageService;
-
+    private $languageService;
     private $languageFile = 'LLL:EXT:bpn_chat/Resources/Private/Language/locallang.xlf';
 
     public function injectLanguageService(LanguageService $languageService)
     {
         $this->languageService = $languageService;
+
+        $siteLanguage = $this->getSiteLanguage();
+        if ($siteLanguage) {
+            $this->languageService->init($siteLanguage);
+        }
     }
 
     protected function getLanguageService()
@@ -52,6 +55,11 @@ trait LanguageTrait
                 ->get(LanguageService::class);
 
             $this->languageService = $languageService;
+
+            $siteLanguage = $this->getSiteLanguage();
+            if ($siteLanguage) {
+                $this->languageService->init($siteLanguage);
+            }
         }
 
         return $this->languageService;
@@ -75,17 +83,6 @@ trait LanguageTrait
         return $newValue;
     }
 
-    public function setLanguageFile(string $languageFile)
-    {
-        if (!strpos($languageFile, 'LLL:EXT:')) {
-            if (!file_exists($languageFile)) {
-                throw new RuntimeException('', 1621859965);
-            }
-        }
-
-        $this->languageFile = $languageFile;
-    }
-
     /**
      * @see \TYPO3\CMS\Core\Localization\LanguageService::sL
      */
@@ -96,5 +93,18 @@ trait LanguageTrait
 
         // return translation  or original key
         return $this->getLanguageService()->sL($input) ?? '['.$key.']';
+    }
+
+    protected function getSiteLanguage()
+    {
+        $request = $GLOBALS['TYPO3_REQUEST'];
+
+        // current site language
+        $language = $request->getAttribute('language');
+        if ($language) {
+            return $language->getTypo3Language();
+        }
+
+        return '';
     }
 }

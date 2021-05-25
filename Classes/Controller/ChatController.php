@@ -113,7 +113,7 @@ class ChatController extends ActionController
             /** @var FrontEndUser $otherPartyUser */
             $otherPartyUser = $this->frontEndUserRepository->getFirstByUids($otherUserIds);
             if ($otherPartyUser) {
-                $otherPartyName = $otherPartyUser->getName();
+                $otherPartyName = $this->getNameService()->getFullName($otherPartyUser);
             }
         }
         $this->view->assign('otherPartyName', $otherPartyName);

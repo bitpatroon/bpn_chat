@@ -48,8 +48,6 @@ class Start
     public function process()
     {
         $operation = GeneralUtility::_GP('operation');
-        $debug = GeneralUtility::_GP('debug');
-
 
         // todo add checksum check on links!
         $this->validateArguments();

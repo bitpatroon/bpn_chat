@@ -18,6 +18,9 @@
       <trans-unit id="you" xml:space="preserve">
         <source>You</source>
       </trans-unit>
+      <trans-unit id="admin.name" xml:space="preserve">
+        <source>Administrator</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>
