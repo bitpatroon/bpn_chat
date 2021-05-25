@@ -5,5 +5,8 @@ plugin.bpnchat_chat {
         administrator_name = admin.name
         administrator_name_translate = 1
         show_message_dates = 1
+        # Message is displayed when otherside of the chat is offline; html is allowed!
+        offlineMessage = Thank you for your message<br />Sorry, but we're offline. We will respond at the first occasion.
+        offlineMessageForUser = The user is now offline. The message is delivered.
     }
 }

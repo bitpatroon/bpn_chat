@@ -121,15 +121,31 @@ class ChatController extends ActionController
 
         $otherUserIds = $this->messageService->getUserIds($otherUserIds);
 
-        $messages = $this->messageRepository->getLastMessages($senderIds, $otherUserIds);
+        $myDefaultName = $this->getNameService()->getUserUnkown($userId);
+        $myName = $this->getNameService()->getFullName($userId, false);
+        if (!$myName) {
+            $myName = $this->translate('you');
+        }
 
         $otherIdsList = implode(',', $otherUserIds);
+        $isAdmin = in_array($userId, $this->bpnChatConfiguration->getReceiverIds());
+
         // Retrieve all messages of userA with userB with user A = self
+        $messages = $this->messageRepository->getLastMessages($senderIds, $otherUserIds);
+        foreach($messages as &$message){
+            if ($message['sender']['name'] === $myDefaultName){
+                $message['sender']['name'] = $myName;
+            } else if ($isAdmin && $message['sender']['uid'] === 0){
+                $message['sender']['name'] = $myName;
+            }
+        }
+        unset($message);
+
         $this->view->assign('messages', $messages);
         $this->view->assign('receiver', $otherIdsList);
         $this->view->assign('urlget', $this->getUrl('get', $otherIdsList));
         $this->view->assign('autoUpdateInterval', $this->bpnChatConfiguration->getAutoUpdateInterval());
-        $this->view->assign('isAdmin', in_array($userId, $this->bpnChatConfiguration->getReceiverIds()) ? 1 : 0);
+        $this->view->assign('isAdmin', $isAdmin ? 1 : 0);
         $this->view->assign('pause_btn_enabled', $this->bpnChatConfiguration->getPauseBtnEnabled() ? 1 : 0);
         $this->view->assign('debug', $this->bpnChatConfiguration->getDebug() ? 1 : 0);
         $this->view->assign('show_date', $this->bpnChatConfiguration->getShowDate() ? 1 : 0);
@@ -144,10 +160,16 @@ class ChatController extends ActionController
                 $otherPartyName = $this->getNameService()->getFullName($otherPartyUser);
             }
         }
+
+        $this->view->assign('current_users_name_tech', $myName);
         $this->view->assign('otherPartyName', $otherPartyName);
-        $this->view->assign('current_users_name', $this->getNameService()->getFullName($userId));
         $this->view->assign('postLinkHash', $this->generateLinkHash(['you' => $userId]));
         $this->view->assign('postLink', $this->getUrl('post', $otherIdsList));
+
+        $this->view->assign(
+            'offlineMessage', $isAdmin
+            ? $this->bpnChatConfiguration->getOfflineMessageForUser()
+            : $this->bpnChatConfiguration->getOfflineMessage());
     }
 
     public function addMessageAction(Message $message, int $receiver = 0, bool $redirect = true)

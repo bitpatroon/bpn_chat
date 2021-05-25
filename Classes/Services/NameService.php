@@ -37,36 +37,48 @@ final class NameService
     /**
      * @param array|int|FrontEndUser $user
      */
-    public function getFullName($user): string
+    public function getFullName($user, bool $defaultWhenNoName = true): string
     {
         if ($user instanceof FrontEndUser) {
             return $this->getFullNameByFrontEndUser($user);
         }
 
         if (is_array($user)) {
-            return $this->getFullNameByArray($user);
+            return $this->getFullNameByArray($user, $defaultWhenNoName);
         }
 
         if (is_int($user)) {
             $userRecord = $this->getFrontEndUserRepository()->getUserRecordByUid($user);
             if ($userRecord) {
-                return $this->getFullNameByArray($userRecord);
+                return $this->getFullNameByArray($userRecord, $defaultWhenNoName);
             }
 
-            return $this->getUserUnkown($user);
+            if ($defaultWhenNoName) {
+                return $this->getUserUnkown($user);
+            }
+
+            return '';
         }
 
-        return $this->getUserUnkown(0);
+        if ($defaultWhenNoName) {
+            return $this->getUserUnkown(0);
+        }
+
+        return '';
     }
 
-    private function getFullNameByArray(array $userRecord)
+    private function getFullNameByArray(array $userRecord, bool $defaultWhenNoName = true)
     {
         if (!$userRecord) {
-            return '[user]';
+            if ($defaultWhenNoName) {
+                return $this->getUserUnkown(0);
+            }
+
+            return '';
         }
 
         $result = [
-            0 => $userRecord['first_name'],
+            0   => $userRecord['first_name'],
             100 => $userRecord['last_name'],
         ];
 
@@ -77,25 +89,29 @@ final class NameService
         ksort($result);
         $result = implode(' ', $result);
         $result = trim($result);
-        if (!$result) {
-            $result = sprintf('[user: %s]', $userRecord['uid']);
+        if ($result) {
+            return $result;
         }
 
-        return $result;
+        if (!$defaultWhenNoName) {
+            return '';
+        }
+
+        return $this->getUserUnkown((int) $userRecord['uid']);
     }
 
     private function getFullNameByFrontEndUser(FrontEndUser $frontEndUser)
     {
         $userRecord = [
-            'first_name' => $frontEndUser->getFirstName(),
+            'first_name'  => $frontEndUser->getFirstName(),
             'middle_name' => $frontEndUser->getMiddleName(),
-            'last_name' => $frontEndUser->getFirstName(),
+            'last_name'   => $frontEndUser->getFirstName(),
         ];
 
         return $this->getFullNameByArray($userRecord);
     }
 
-    private function getUserUnkown(int $uid)
+    public function getUserUnkown(int $uid)
     {
         return sprintf('[user: %s]', $uid);
     }

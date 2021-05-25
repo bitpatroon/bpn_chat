@@ -41,7 +41,7 @@
         return {
             sender: { uid: senderId },
             message: message,
-            dateTS: (new Date()).getTime()
+            crdate: Math.floor((new Date()).getTime() / 1000)
         };
     }
 
@@ -58,7 +58,7 @@
         };
     }
 
-    function handleNewMessages(uid, messageObj, $chatApplicationElement)
+    function handleNewMessage(uid, messageObj, $chatApplicationElement)
     {
         settings.lastMessageId = uid;
         var itemAlreadyVisible = $chatApplicationElement.find('li[data-uid="' + uid + '"]').length >= 1;
@@ -124,7 +124,7 @@
             var newMessagesCount = 0;
             keys.forEach(function (uid) {
                 var messageObj = data.messages[uid];
-                if (handleNewMessages(uid, messageObj, $chatApplicationElement)) {
+                if (handleNewMessage(uid, messageObj, $chatApplicationElement)) {
                     newMessagesCount++;
                 }
             });
@@ -144,8 +144,12 @@
             data: { message: message },
             url: targetUrl
         }).done(function (data) {
+            if (settings.othersOnlineState === 0) {
+                message =  '<div class="alert alert-warning">' + settings.offlineMessage + '</div>' + message;
+            }
+
             var messageObj = getMessageObj(settings.you, message);
-            handleNewMessages(data.uid, messageObj, $chatApplicationElement);
+            handleNewMessage(data.uid, messageObj, $chatApplicationElement);
             $textArea.val('');
         });
     }
@@ -297,6 +301,7 @@
                 settings.pl = $(this).attr('data-pl');
                 settings.lastMessageId = 0;
                 settings.othersOnlineState = 0;
+                settings.offlineMessage = $(this).attr('data-offline-message');
 
                 $(this).remove();
 

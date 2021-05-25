@@ -66,6 +66,10 @@ class FriendlyUserNameViewHelper extends AbstractViewHelper
         }
 
         $user = $this->arguments['user'];
-        return $this->getNameService()->getFullName($user);
+        $result = $this->getNameService()->getFullName($user, false);
+        if(!$result && $user['name']) {
+            return $user['name'];
+        }
+        return $this->getNameService()->getUserUnkown($userId);
     }
 }

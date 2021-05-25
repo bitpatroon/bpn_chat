@@ -20,6 +20,7 @@
           data-other-party="{receiver}"
           data-other-party-name="{otherPartyName}"
           data-debug="{debug}"
+          data-offline-message="{offlineMessage}"
     ></span>
     <f:form class="{f:if(condition: '{show_date}', then: '', else:'state-no-date')}"
             action="addMessage"
@@ -43,7 +44,7 @@
                                                              data-on="fa fa-toggle-on"
                                                              data-off="fa fa-toggle-off"></i></span>
                         <span data-action="show_date" data-show-date="{show_date}"
-                              style="display: none">Date:<i class="fa fa-toggle-on"
+                              style="display: none">Info:<i class="fa fa-toggle-on"
                                                              data-on="fa fa-toggle-on"
                                                              data-off="fa fa-toggle-off"></i></span>
                     </div>

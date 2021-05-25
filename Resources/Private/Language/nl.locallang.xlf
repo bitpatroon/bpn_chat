@@ -56,7 +56,7 @@
         <source>Online</source>
         <target>Online</target>
       </trans-unit>
-      <trans-unit id="status.status.away" xml:space="preserve">
+      <trans-unit id="status.away" xml:space="preserve">
         <source>Away</source>
         <target>Away</target>
       </trans-unit>

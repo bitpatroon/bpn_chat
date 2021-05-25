@@ -1,11 +1,28 @@
 plugin.bpnchat_chat {
     settings {
+        # the auto update interval. 5-10 is reasonable
         auto_update_interval = {$plugin.bpnchat_chat.settings.auto_update_interval}
+
+        # Allows to toggle a pause button
         pause_btn_enabled = {$plugin.bpnchat_chat.settings.pause_btn_enabled}
+
+        # name of the admin
         administrator_name = {$plugin.bpnchat_chat.settings.administrator_name}
+
+        # when set to 1, administrator_name is supposed to be a language-key
         administrator_name_translate = {$plugin.bpnchat_chat.settings.administrator_name_translate}
-        debug = 1
+
+        #debug setting. Displays console logs in FE
+        debug = 0
+
+        # 1 to show message dates at the chat window.
         show_message_dates = {$plugin.bpnchat_chat.settings.show_message_dates}
+
+        # Message is displayed when otherside of the chat is offline; html is allowed!
+        offlineMessage = {$plugin.bpnchat_chat.settings.offlineMessage}
+
+        # Message is displayed to an admin when the user is offline.
+        offlineMessageForUser = {$plugin.bpnchat_chat.settings.offlineMessageForUser}
     }
 }
 

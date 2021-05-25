@@ -69,6 +69,11 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
     /** @var int */
     private $showDate = 0;
 
+    /** @var string */
+    private $offlineMessage = 0;
+    /** @var string */
+    private $offlineMessageForUser;
+
     /**
      * Initializes the application configuration.
      *
@@ -115,6 +120,8 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
 
         $this->debug = ((int) $this->getValueFromSettings($settings, 'debug')) ? 1 : 0;
         $this->showDate = ((int) $this->getValueFromSettings($settings, 'show_message_dates')) ? 1 : 0;
+        $this->offlineMessage = $this->getValueFromSettings($settings, 'offlineMessage');
+        $this->offlineMessageForUser = $this->getValueFromSettings($settings, 'offlineMessageForUser');
 
         /** @var QuerySettingsInterface $querySettingsInterface */
         $defaultQuerySettings = GeneralUtility::makeInstance(ObjectManager::class)
@@ -177,5 +184,21 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
     public function getShowDate(): int
     {
         return $this->showDate ?? 0;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOfflineMessage()
+    {
+        return $this->offlineMessage;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOfflineMessageForUser()
+    {
+        return $this->offlineMessageForUser;
     }
 }
