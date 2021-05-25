@@ -96,4 +96,35 @@ trait SecureLinkTrait
 
         return $secret.($GLOBALS['TYPO3_CONF_VARS']['SYS']['encryptionKey']);
     }
+
+    protected function generateLinkWithHash(array $params, array $hashParams)
+    {
+        $params['sh'] = $this->generateLinkHash($hashParams);
+
+        $script = GeneralUtility::getIndpEnv('SCRIPT_NAME');
+        return $script . '?' . http_build_query($params);
+    }
+
+    protected function validateSenderLinkHash(array $hashParams, string $hash)
+    {
+        $calculatedHash = $this->generateLinkHash($hashParams);
+        if ($calculatedHash === $hash) {
+            return;
+        }
+        throw new RuntimeException(
+            'Not allowed',
+            1621968013
+        );
+    }
+
+    private function generateLinkHash(array $arguments)
+    {
+        $ts = time() / (86400 * 2);
+
+        $arguments['dt'] = (int) floor((int) $ts);
+        $arguments['key'] = $this->getSecret();
+
+        return md5(implode(',', $arguments));
+    }
+
 }

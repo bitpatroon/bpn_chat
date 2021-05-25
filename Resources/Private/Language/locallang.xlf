@@ -21,6 +21,18 @@
       <trans-unit id="admin.name" xml:space="preserve">
         <source>Administrator</source>
       </trans-unit>
+      <trans-unit id="chat.conversation" xml:space="preserve">
+        <source>Conversation</source>
+      </trans-unit>
+      <trans-unit id="chat.conversation.with" xml:space="preserve">
+        <source>Conversation with</source>
+      </trans-unit>
+      <trans-unit id="chat.last.message" xml:space="preserve">
+        <source>Last message date</source>
+      </trans-unit>
+      <trans-unit id="chat.user.username" xml:space="preserve">
+        <source>Gebruiker</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

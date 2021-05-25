@@ -18,6 +18,12 @@
         return d + '-' + mm + '-' + yyyy + ' ' + HH + ':' + minutes;
     }
 
+    function updateMessagesScroll($chatApplicationElement)
+    {
+        $messagesWindow = $chatApplicationElement.find('.chat-messages');
+        $messagesWindow.scrollTop($messagesWindow.prop('scrollHeight'));
+    }
+
     function getNewMessages(url, callback)
     {
         $.ajax({
@@ -30,8 +36,18 @@
         });
     }
 
+    function getMessageObj(senderId, message)
+    {
+        return {
+            sender: { uid: senderId },
+            message: message,
+            dateTS: (new Date()).getTime()
+        };
+    }
+
     function determineMessagesProps(uid, messageObj)
     {
+
         var iSentThisMessage = (messageObj['sender']['uid'] === settings.you) || ((settings.you === 0) && settings.amAdmin);
 
         return {
@@ -49,18 +65,36 @@
             if (settings.debug) {
                 console.log('chat.js:1621930698247:', uid + ' is already rendered.');
             }
-            return;
+            return false;
         }
         var templateProps = determineMessagesProps(uid, messageObj);
         var template = $chatApplicationElement.find('template.' + templateProps.templateKey).html();
         var $newElement = $(`<li class="list-group-item" data-uid="${uid}">${template}</li>`);
 
-        var $entryForm = $chatApplicationElement.find('li[data-type="entry-form"]');
-        $entryForm.before($newElement);
-        $newElement = $entryForm.prev();
-        $newElement.find('[data-field="message"]').html(templateProps.messageText);
-        $newElement.find('[data-field="date"]').html(templateProps.date);
-        $newElement.find('[data-field="name"]').html(templateProps.name);
+        var $chatMessages = $chatApplicationElement.find('.chat-messages');
+        $chatMessages.append($newElement);
+
+        $newItem = $chatApplicationElement.find('li[data-uid="' + uid + '"]');
+        $newItem.find('[data-field="message"]').html(templateProps.messageText);
+        $newItem.find('[data-field="date"]').html(templateProps.date);
+        $newItem.find('[data-field="name"]').html(templateProps.name);
+        updateMessagesScroll($chatApplicationElement);
+        return true;
+    }
+
+    function setNotificationOnWindow()
+    {
+        if (settings.allowUpdate) {
+            document.title = '[NEW] ' + settings.windowTitle;
+        }
+    }
+
+    function notifyMessages($chatApplicationElement, amountNewMessages)
+    {
+        updateMessagesScroll($chatApplicationElement);
+        if (amountNewMessages) {
+            setNotificationOnWindow();
+        }
     }
 
     function handleGetNewMessages($chatApplicationElement)
@@ -74,16 +108,64 @@
             }
 
             var keys = Object.keys(data.messages);
-
+            var newMessagesCount = 0;
             keys.forEach(function (uid) {
                 var messageObj = data.messages[uid];
-                handleNewMessages(uid, messageObj, $chatApplicationElement);
+                if (handleNewMessages(uid, messageObj, $chatApplicationElement)) {
+                    console.log('chat.js:1621972667675:', 'message added');
+                    newMessagesCount++;
+                }
             });
+
+            notifyMessages($chatApplicationElement, newMessagesCount);
+        });
+    }
+
+    function submitMessages($chatApplicationElement)
+    {
+        var $textArea = $chatApplicationElement.find('textarea.message-input');
+        var message = $textArea.val();
+        var targetUrl = atob(settings.pl) + '&sh=' + settings.sh;
+
+        $.ajax({
+            method: 'POST',
+            data: { message: message },
+            url: targetUrl
+        }).done(function (data) {
+            var messageObj = getMessageObj(settings.you,message);
+            handleNewMessages(data.uid, messageObj, $chatApplicationElement);
+            $textArea.val('');
+        });
+    }
+
+    function initApplicationEvents($chatApplicationElement)
+    {
+        window.addEventListener('blur', () => {
+            settings.allowUpdate = 1;
+        });
+        window.addEventListener('focus', () => {
+            settings.allowUpdate = 0;
+            document.title = settings.windowTitle;
+        });
+
+        $chatApplicationElement.find('textarea.message-input').keyup(function (e) {
+            if (e.originalEvent.keyCode === 13 && e.originalEvent.ctrlKey === true) {
+                submitMessages($chatApplicationElement);
+            }
+        });
+
+        $chatApplicationElement.find('form').find('input[type="submit"]').click(function (event) {
+            event.preventDefault();
+            var $textArea = $chatApplicationElement.find('textarea.message-input');
+
+            submitMessages($chatApplicationElement, $textArea.val());
         });
     }
 
     function initChat($chatApplicationElement)
     {
+        initApplicationEvents($chatApplicationElement);
+
         handleGetNewMessages($chatApplicationElement);
 
         var interval = (settings.autoUpdateInterval || 0) * 1000;
@@ -115,40 +197,40 @@
                 var paused = window.pause || 0;
                 var $icon = $(this).find('i');
                 if (paused !== 0) {
-                    if (settings.debug){
+                    if (settings.debug) {
                         console.log('chat.js:1621945717098:', 'continue');
                     }
                     window.pause = 0;
-                    $icon.attr('class', $icon.attr('data-on'))
+                    $icon.attr('class', $icon.attr('data-on'));
 
                 } else {
-                    if (settings.debug){
+                    if (settings.debug) {
                         console.log('chat.js:1621945717098:', 'stopped');
                     }
                     window.pause = 1;
-                    $icon.attr('class', $icon.attr('data-off'))
+                    $icon.attr('class', $icon.attr('data-off'));
                 }
             });
         }
 
         var $infoButton = $chatApplicationElement.find('[data-action="show_date"]');
-        if(parseInt($infoButton.attr('data-show-date') || 0)) {
+        if (parseInt($infoButton.attr('data-show-date') || 0)) {
             $infoButton.show();
             $infoButton.click(function () {
                 var showDate = parseInt($(this).attr('data-show-date') || 1);
                 var $icon = $(this).find('i');
                 if (showDate === 1) {
                     $(this).attr('data-show-date', 0);
-                    $icon.attr('class', $icon.attr('data-off'))
-                    $chatApplicationElement.addClass('state-no-date');
+                    $icon.attr('class', $icon.attr('data-off'));
+                    $chatApplicationElement.find('form').addClass('state-no-date');
                 } else {
                     $(this).attr('data-show-date', 1);
-                    $icon.attr('class', $icon.attr('data-on'))
-                    $chatApplicationElement.removeClass('state-no-date');
+                    $icon.attr('class', $icon.attr('data-on'));
+                    $chatApplicationElement.find('form').removeClass('state-no-date');
                 }
             });
         } else {
-            $chatApplicationElement.addClass('state-no-date');
+            $chatApplicationElement.find('form').addClass('state-no-date');
             $infoButton.remove();
         }
     }
@@ -167,13 +249,16 @@
                 settings.pauseBtnEnabled = parseInt($(this).attr('data-pause-btn-enabled') || 0);
                 settings.otherPartyName = $(this).attr('data-other-party-name');
                 settings.debug = parseInt($(this).attr('data-debug') || 0);
+                settings.windowTitle = document.title;
+                settings.sh = $(this).attr('data-sh');
+                settings.pl = $(this).attr('data-pl');
 
                 $(this).remove();
 
                 if (!settings.urls.getNew) {
                     return;
                 }
-
+                updateMessagesScroll($chat);
                 initChat($chat);
                 initButtons($chat);
             });

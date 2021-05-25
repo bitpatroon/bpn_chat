@@ -7,16 +7,24 @@
 
 <f:section name="main">
     <f:if condition="{chats}">
-        <ul>
+        <div class="row">
             <f:for each="{chats}"
                    as="chat">
-                <li>
-                    <f:link.action action="chat"
-                                   arguments="{otherUserId: chat.uid }">{chat.username}
-                    </f:link.action>
-                </li>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><f:translate key="chat.conversation" /></h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{chat.user.name}</h6>
+                            <p class="card-text"><small><f:translate key="chat.user.username" />:<br />{chat.user.username}</small></p>
+                            <p class="card-text"><small><f:translate key="chat.last.message" />:<br /><f:format.date format="d-m-Y H:i">{chat.chat.crdate}</f:format.date></small></p>
+                            <f:link.action class="card-link"
+                                           action="chat"
+                                           arguments="{otherUserId: chat.user.uid }">Open</f:link.action>
+                        </div>
+                    </div>
+                </div>
             </f:for>
-        </ul>
+        </div>
     </f:if>
 </f:section>
 

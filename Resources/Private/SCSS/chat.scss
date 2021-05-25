@@ -1,5 +1,8 @@
 .tx-bpnchat {
-    max-width: 500px;
+
+    &.chat-action{
+        max-width: 500px;
+    }
 
     .chat-messages {
         max-height: 600px;

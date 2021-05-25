@@ -8,7 +8,8 @@
 <f:section name="main">
     <f:variable name="current_user_id"><f:cObject typoscriptObjectPath="lib.userid"/></f:variable>
     <span class="chat-args"
-          data-url-get="{urlget}"
+          data-sh="{postLinkHash}"
+          data-pl="{postLink}"
           data-url-getnew="{urlgetnew}"
           data-auto-update-interval="{autoUpdateInterval}"
           data-you="{current_user_id}"
@@ -63,10 +64,9 @@
         </div>
         <div class="form-row">
             <div class="col">
-                <f:form.textarea id="message"
-                                 name="message"
+                <f:form.textarea name="message"
                                  value=""
-                                 class="form-control"
+                                 class="form-control message-input"
                                  property="message"
                                  placeholder="{f:translate(key:'your_message_here')}"/>
             </div>

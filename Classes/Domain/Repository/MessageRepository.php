@@ -45,42 +45,57 @@ class MessageRepository extends Repository
 
     const TABLE = 'tx_bpnchat_domain_model_message';
 
-    public function getChatPartnerIds(int $userId)
+    /**
+     * @param int $userId
+     * @param int $timeStamp must not be older than $timeStamp
+     *
+     * @return array
+     */
+    public function getChatPartnerIds(int $userId, int $timeStamp = 0)
     {
-        /** Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)
-            ->getConnectionForTable(self::TABLE);
+        $table = self::TABLE;
+        /** @var QueryBuilder $queryBuilder */
+        $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
 
-        // messages where userid the sender
-        $dataIsSender = $connection
-            ->select(
-                ['receivers'],
-                self::TABLE,
-                ['sender' => $userId, 'delivered' => 0],
-                ['receivers']
-            )
-            ->fetchAllAssociative();
+        $queryBuilder
+            ->select('receivers')
+            ->addSelectLiteral($queryBuilder->expr()->max('crdate', 'maxCrDate'))
+            ->from($table)
+            ->groupBy('receivers')
+            ->where($queryBuilder->expr()->eq('sender', $userId));
 
-        $dataIsReceiver = $connection
-            ->select(
-                ['sender'],
-                self::TABLE,
-                ['receivers' => $userId, 'delivered' => 0],
-                ['sender']
-            )
-            ->fetchAllAssociative();
+        if($timeStamp){
+            $queryBuilder->andWhere($queryBuilder->expr()->gt('crdate', $timeStamp));
+        }
+
+        $dataIsSender = $queryBuilder->execute()->fetchAllAssociative();
+
+        $queryBuilder
+            ->select('sender')
+            ->addSelectLiteral($queryBuilder->expr()->max('crdate', 'maxCrDate'))
+            ->from($table)
+            ->groupBy('sender')
+            ->where($queryBuilder->expr()->eq('receivers', $userId));
+        if($timeStamp){
+            $queryBuilder->andWhere($queryBuilder->expr()->gt('crdate', $timeStamp));
+        }
+
+        $dataIsReceiver = $queryBuilder->execute()->fetchAllAssociative();
 
         $rows = [];
         if ($dataIsSender) {
             foreach ($dataIsSender as $row) {
-                $rows[(int) $row['receivers']] = (int) $row['receivers'];
+                $rows[(int) $row['receivers']] = (int) $row['maxCrDate'];
             }
         }
         if ($dataIsReceiver) {
             foreach ($dataIsReceiver as $row) {
-                $rows[(int) $row['sender']] = (int) $row['sender'];
+                $rows[(int) $row['sender']] = (int) $row['maxCrDate'];
             }
         }
+
+        arsort($rows);
 
         return $rows;
     }
@@ -134,7 +149,7 @@ class MessageRepository extends Repository
         $rows = $this->linkSenderReceivers($rows, $userIds, $otherUserIds);
         $rows = $this->setResultIndexField($rows);
 
-        $this->markMyMessageDelivered($rows, $userIds);
+//        $this->markMyMessageDelivered($rows, $userIds);
 
         return $rows;
     }
@@ -324,6 +339,5 @@ class MessageRepository extends Repository
 
         return $query->execute();
     }
-
 
 }

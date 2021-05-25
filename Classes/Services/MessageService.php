@@ -28,6 +28,7 @@
 namespace BPN\BpnChat\Services;
 
 use BPN\BpnChat\Traits\BpnChatConfigurationTrait;
+use BPN\BpnChat\Traits\SecureLinkTrait;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class MessageService
@@ -63,4 +64,5 @@ class MessageService
 
         return in_array($userId, $receiverIds);
     }
+
 }

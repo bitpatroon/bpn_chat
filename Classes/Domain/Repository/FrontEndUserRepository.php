@@ -27,6 +27,7 @@
 
 namespace BPN\BpnChat\Domain\Repository;
 
+use BPN\BpnChat\Domain\Model\FrontEndUser;
 use BPN\BpnChat\Traits\RepositoryTrait;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -72,6 +73,7 @@ class FrontEndUserRepository extends \TYPO3\CMS\Extbase\Domain\Repository\Fronte
         return $this->setResultIndexField($data);
     }
 
+    /** @return FrontEndUser[] */
     public function findAllByUid(?array $chatPartnerIds)
     {
         if (!$chatPartnerIds) {

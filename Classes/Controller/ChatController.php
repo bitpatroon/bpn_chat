@@ -38,6 +38,7 @@ use BPN\BpnChat\Traits\MessageServiceTrait;
 use BPN\BpnChat\Traits\NameServiceTrait;
 use BPN\BpnChat\Traits\PageRendererTrait;
 use BPN\BpnChat\Traits\PersistenceManagerTrait;
+use BPN\BpnChat\Traits\SecureLinkTrait;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Extbase\Persistence\Generic\QuerySettingsInterface;
@@ -53,6 +54,7 @@ class ChatController extends ActionController
     use PageRendererTrait;
     use LanguageTrait;
     use NameServiceTrait;
+    use SecureLinkTrait;
 
     protected function initializeAction()
     {
@@ -81,10 +83,27 @@ class ChatController extends ActionController
 
     public function indexAction()
     {
-        $chatIds = $this->messageRepository->getChatPartnerIds($this->authorizationService->getUserId());
+        $me = $this->authorizationService->getUserId();
+
+        $notBeforeTimeStamp = strtotime('-1 month');
+        $chatIds = $this->messageRepository->getChatPartnerIds($me, $notBeforeTimeStamp);
         $chatIds = $this->addAdmins($chatIds);
 
-        $chats = $this->frontEndUserRepository->findAllByUid($chatIds);
+        $chatUsers = $this->frontEndUserRepository->findAllByUid(array_keys($chatIds));
+        $chats = [];
+        foreach ($chatIds as $userId => $chatCrDate) {
+            if ($userId == $me) {
+                continue;
+            }
+            if (!isset($chatUsers[$userId])) {
+                continue;
+            }
+
+            $chats[] = [
+                'chat' => ['crdate' => $chatCrDate],
+                'user' => ['uid' => $userId, 'username' => $chatUsers[$userId]->getUsername()],
+            ];
+        }
 
         $this->view->assign('chats', $chats);
     }
@@ -93,7 +112,13 @@ class ChatController extends ActionController
     {
         $userId = $this->authorizationService->getUserId();
         $senderIds = $this->messageService->getUserIds($userId);
-        $otherUserIds = $this->messageService->getUserIds($otherUserId);
+        $otherUserIds = [$otherUserId];
+        if ($otherUserId == 0) {
+            $admins = $this->bpnChatConfiguration->getReceiverIds();
+            $otherUserIds = array_merge($otherUserIds, $admins);
+        }
+
+        $otherUserIds = $this->messageService->getUserIds($otherUserIds);
 
         $messages = $this->messageRepository->getLastMessages($senderIds, $otherUserIds);
 
@@ -121,6 +146,8 @@ class ChatController extends ActionController
         }
         $this->view->assign('otherPartyName', $otherPartyName);
         $this->view->assign('current_users_name', $this->getNameService()->getFullName($userId));
+        $this->view->assign('postLinkHash', $this->generateLinkHash(['you' => $userId]));
+        $this->view->assign('postLink', $this->getUrl('post', $otherIdsList));
     }
 
     public function addMessageAction(Message $message, int $receiver = 0, bool $redirect = true)
@@ -194,14 +221,16 @@ class ChatController extends ActionController
             return [];
         }
         if (isset($chatPartnerIds[0])) {
+            $timeStampAdmins = $chatPartnerIds[0];
             unset($chatPartnerIds[0]);
             if (isset($this->settings['receivers']) && $this->settings['receivers']) {
                 $admins = GeneralUtility::intExplode(',', $this->settings['receivers']);
                 foreach ($admins as $admin) {
-                    $chatPartnerIds[$admin] = $admin;
+                    $chatPartnerIds[$admin] = $timeStampAdmins;
                 }
             }
         }
+        arsort($chatPartnerIds);
 
         return $chatPartnerIds;
     }
@@ -220,6 +249,14 @@ class ChatController extends ActionController
                     "/index.php?eID=tx_bpnchat&operation=getnew&you=%s&other=%s",
                     $this->authorizationService->getUserId(),
                     $otherUserIds
+                );
+            case 'post':
+                return base64_encode(
+                    sprintf(
+                        "/index.php?eID=tx_bpnchat&you=%s&other=%s",
+                        $this->authorizationService->getUserId(),
+                        $otherUserIds
+                    )
                 );
             default:
                 return '';
