@@ -55,7 +55,7 @@ class MessageRepository extends Repository
     {
         $table = self::TABLE;
         /** @var QueryBuilder $queryBuilder */
-        $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ConnectionPool::class)
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable($table);
 
         $queryBuilder
@@ -128,7 +128,7 @@ class MessageRepository extends Repository
         return $rows;
     }
 
-    public function getNewMessages(array $userIds, array $otherUserIds)
+    public function getNewMessages(array $userIds, array $otherUserIds, int $newerThanUid = 0)
     {
         $table = self::TABLE;
         /** @var QueryBuilder $queryBuilder */
@@ -137,7 +137,9 @@ class MessageRepository extends Repository
 
         $where = [];
         $where[] = $this->getConditions($queryBuilder, $userIds, $otherUserIds);
-        $where[] = $queryBuilder->expr()->eq('delivered', 0);
+        if($newerThanUid){
+            $where[] = $queryBuilder->expr()->gt('uid', $newerThanUid);
+        }
 
         $queryBuilder
             ->select('*')

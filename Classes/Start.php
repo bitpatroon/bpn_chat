@@ -27,15 +27,15 @@
 
 namespace BPN\BpnChat;
 
-use BPN\BpnChat\Controller\ChatController;
 use BPN\BpnChat\Domain\Model\Message;
 use BPN\BpnChat\Domain\Repository\MessageRepository;
+use BPN\BpnChat\Domain\Repository\OnlineRepository;
 use BPN\BpnChat\Traits\AuthorizationServiceTrait;
 use BPN\BpnChat\Traits\FrontEndUserTrait;
 use BPN\BpnChat\Traits\LanguageTrait;
+use BPN\BpnChat\Traits\OnlineRepositoryTrait;
 use BPN\BpnChat\Traits\PersistenceManagerTrait;
 use BPN\BpnChat\Traits\SecureLinkTrait;
-use BPN\Typo3LoginService\Controller\Login\EidLoginController;
 use Cest\Commons\Generic\Exception;
 use RuntimeException;
 use TYPO3\CMS\Core\Core\Environment;
@@ -48,6 +48,7 @@ class Start
     use AuthorizationServiceTrait;
     use FrontEndUserTrait;
     use LanguageTrait;
+    use OnlineRepositoryTrait;
     use PersistenceManagerTrait;
     use SecureLinkTrait;
 
@@ -55,7 +56,7 @@ class Start
 
     public function process()
     {
-//        $operation = GeneralUtility::_GP('operation');
+        $operation = GeneralUtility::_GP('operation') ?? '';
 
         try {
             $this->validateArguments();
@@ -63,12 +64,27 @@ class Start
 
             switch ($method) {
                 case 'GET':
+                    if ($operation === 'online') {
+                        $you = (int) $this->getRequiredArgument('you');
+                        $others = $this->getRequiredArgument('other');
+                        $result['status'] = $this->getOtherIsOnline($you, $others);
+                        break;
+                    }
                     $you = $this->getRequiredArgument('you');
                     $others = $this->getRequiredArgument('other');
+                    $lastUid = (int) $this->getRequiredArgument('uid');
 
-                    return $this->getNewChatMessages($you, $others);
+                    return $this->getNewChatMessages($you, $others, $lastUid);
 
                 case 'POST':
+                    if ($operation === 'online') {
+                        $you = (int) $this->getRequiredArgument('you');
+                        $others = $this->getRequiredArgument('other');
+
+                        $result['message'] = $this->setOnline($you, $others);
+                        break;
+                    }
+
                     $you = (int) $this->getRequiredArgument('you');
                     $others = $this->getRequiredArgument('other');
                     $message = $this->getRequiredArgument('message');
@@ -92,7 +108,7 @@ class Start
         return new JsonResponse($result);
     }
 
-    private function getNewChatMessages(string $userId, string $others): JsonResponse
+    private function getNewChatMessages(string $userId, string $others, int $newerThanUid = 0): JsonResponse
     {
         /** @var MessageRepository $messageRepository */
         $messageRepository = GeneralUtility::makeInstance(ObjectManager::class)
@@ -102,23 +118,7 @@ class Start
         $otherUserIds = GeneralUtility::intExplode(',', $others);
 
         $result = [];
-        $result['messages'] = $messageRepository->getNewMessages($senderIds, $otherUserIds);
-        $result['count'] = count($result['messages']);
-
-        return new JsonResponse($result);
-    }
-
-    private function getLastMessages(string $userId, string $others): JsonResponse
-    {
-        /** @var MessageRepository $messageRepository */
-        $messageRepository = GeneralUtility::makeInstance(ObjectManager::class)
-            ->get(MessageRepository::class);
-
-        $senderIds = GeneralUtility::intExplode(',', $userId);
-        $otherUserIds = GeneralUtility::intExplode(',', $others);
-
-        $result = [];
-        $result['messages'] = $messageRepository->getLastMessages($senderIds, $otherUserIds, 1);
+        $result['messages'] = $messageRepository->getNewMessages($senderIds, $otherUserIds, $newerThanUid);
         $result['count'] = count($result['messages']);
 
         return new JsonResponse($result);
@@ -143,7 +143,6 @@ class Start
             $persistanceManager->persistAll();
 
             $result['uid'] = $messageObj->getUid();
-
         } catch (Exception $exception) {
             $result['code'] = $exception->getCode();
             $result['error'] = $exception->getMessage();
@@ -161,7 +160,7 @@ class Start
                 return $value;
             }
         }
-        throw new \RuntimeException('Required value "'.$argumentId.'" is not passed or was empty', 1621860676);
+        throw new RuntimeException('Required value "'.$argumentId.'" is not passed or was empty', 1621860676);
     }
 
     private function getArgument(string $argumentId)
@@ -176,7 +175,7 @@ class Start
             return $value;
         }
 
-        throw new \RuntimeException('Required int value "'.$argumentId.'" is not passed or was empty', 1621861579);
+        throw new RuntimeException('Required int value "'.$argumentId.'" is not passed or was empty', 1621861579);
     }
 
     private function validateArguments()
@@ -195,5 +194,50 @@ class Start
             $hashParams = ['you' => GeneralUtility::_GP('you')];
             $this->validateSenderLinkHash($hashParams, GeneralUtility::_GP('sh'));
         }
+    }
+
+    private function setOnline(int $you, string $others)
+    {
+        $otherIds = GeneralUtility::intExplode(',', $others);
+        $otherId = 0;
+        foreach ($otherIds as $id) {
+            if (!$id) {
+                continue;
+            }
+            $otherId = $id;
+        }
+
+        $this->getOnlineRepository()->setOnline($you, $otherId);
+
+        return 1;
+    }
+
+    private function getOtherIsOnline(int $you, $others): int
+    {
+        $otherIds = GeneralUtility::intExplode(',', $others);
+        $otherId = 0;
+        foreach ($otherIds as $id) {
+            if (!$id) {
+                continue;
+            }
+            $otherId = $id;
+        }
+
+        $onLineRecord = $this->getOnlineRepository()->getOnline($otherId);
+
+        if (!$onLineRecord) {
+            return OnlineRepository::ONLINE_NO;
+        }
+
+        $timeStamp = $onLineRecord['online'];
+        $diff = (time() - $timeStamp);
+        if ($diff > 300) {
+            return OnlineRepository::ONLINE_NO;
+        }
+        if ((int) $onLineRecord['receiver_id'] !== $you) {
+            return OnlineRepository::ONLINE_AWAY;
+        }
+
+        return OnlineRepository::ONLINE_YES;
     }
 }

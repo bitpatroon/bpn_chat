@@ -10,7 +10,7 @@
     <span class="chat-args"
           data-sh="{postLinkHash}"
           data-pl="{postLink}"
-          data-url-getnew="{urlgetnew}"
+          data-url-get="{urlget}"
           data-auto-update-interval="{autoUpdateInterval}"
           data-you="{current_user_id}"
           data-your-name="{current_users_name}"
@@ -29,7 +29,14 @@
         <div class="card">
             <div class="card-header">
                 <div class="row">
-                    <div class="col-md-9"><i class="fa fa-comments"></i>&nbsp;Chat : {otherPartyName}</div>
+                    <div class="col-md-9"><i
+                        class="fa fa-comments"></i>&nbsp;Chat : {otherPartyName} <span
+                        class="online-state badge"
+                        data-default-class="online-state badge"
+                        data-online-text="{f:translate(key: 'status.online')}"
+                        data-away-text="{f:translate(key: 'status.away')}"
+                        data-offline-text="{f:translate(key: 'status.offline')}"></span>
+                    </div>
                     <div class="col-md-3 text-right">
                         <span data-action="pause"
                               style="display: none">Pause:<i class="fa fa-toggle-on"

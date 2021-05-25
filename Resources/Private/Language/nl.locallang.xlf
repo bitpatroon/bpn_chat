@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xliff version="1.0" standalone="yes">
-  <file source-language="en" datatype="plaintext" original="messages" data="2021-05-11T14:42:00" product-name="bpn_chat">
+  <file source-language="en" datatype="plaintext" original="messages" data="2021-05-11T14:42:00"
+        product-name="bpn_chat">
     <header/>
     <body>
       <trans-unit id="your_message_here" xml:space="preserve">
@@ -26,6 +27,42 @@
       <trans-unit id="admin.name" xml:space="preserve">
         <source>Administrator</source>
         <target>Beheerder</target>
+      </trans-unit>
+      <trans-unit id="chat.conversation" xml:space="preserve">
+        <source>Conversation</source>
+        <target>Conversatie</target>
+      </trans-unit>
+      <trans-unit id="chat.conversation.with" xml:space="preserve">
+        <source>Conversation with</source>
+        <target>Conversatie met</target>
+      </trans-unit>
+      <trans-unit id="chat.last.message" xml:space="preserve">
+        <source>Last message date</source>
+        <target>Datum laatste bericht</target>
+      </trans-unit>
+      <trans-unit id="chat.user.username" xml:space="preserve">
+        <source>User</source>
+        <target>Gebruiker</target>
+      </trans-unit>
+      <trans-unit id="admin.no.chats" xml:space="preserve">
+        <source>There are currently no chats. Come back later.</source>
+        <target>Er zijn momenteel geen chats. Probeer het later nog eens.</target>
+      </trans-unit>
+      <trans-unit id="user.open.chat" xml:space="preserve">
+        <source>Start a new chat</source>
+        <target>Start een nieuwe chat</target>
+      </trans-unit>
+      <trans-unit id="status.online" xml:space="preserve">
+        <source>Online</source>
+        <target>Online</target>
+      </trans-unit>
+      <trans-unit id="status.status.away" xml:space="preserve">
+        <source>Away</source>
+        <target>Away</target>
+      </trans-unit>
+      <trans-unit id="status.offline" xml:space="preserve">
+        <source>Offline</source>
+        <target>Offline</target>
       </trans-unit>
     </body>
   </file>

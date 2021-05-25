@@ -24,7 +24,7 @@
         $messagesWindow.scrollTop($messagesWindow.prop('scrollHeight'));
     }
 
-    function getNewMessages(url, callback)
+    function doAjaxCall(url, callback)
     {
         $.ajax({
             type: 'GET',
@@ -60,6 +60,7 @@
 
     function handleNewMessages(uid, messageObj, $chatApplicationElement)
     {
+        settings.lastMessageId = uid;
         var itemAlreadyVisible = $chatApplicationElement.find('li[data-uid="' + uid + '"]').length >= 1;
         if (itemAlreadyVisible) {
             if (settings.debug) {
@@ -82,6 +83,17 @@
         return true;
     }
 
+    function submitIsOnline()
+    {
+        var targetUrl = atob(settings.pl) + '&sh=' + settings.sh + '&operation=online';
+
+        $.ajax({
+            method: 'POST',
+            data: {},
+            url: targetUrl
+        });
+    }
+
     function setNotificationOnWindow()
     {
         if (settings.allowUpdate) {
@@ -99,7 +111,8 @@
 
     function handleGetNewMessages($chatApplicationElement)
     {
-        getNewMessages(settings.urls.getNew, function (data) {
+        var url = settings.urls.get + '&uid=' + settings.lastMessageId;
+        doAjaxCall(url, function (data) {
             if (!data.messages) {
                 if (settings.debug) {
                     console.log('chat.js:1621880977751:', 'No new messages');
@@ -112,7 +125,6 @@
             keys.forEach(function (uid) {
                 var messageObj = data.messages[uid];
                 if (handleNewMessages(uid, messageObj, $chatApplicationElement)) {
-                    console.log('chat.js:1621972667675:', 'message added');
                     newMessagesCount++;
                 }
             });
@@ -132,7 +144,7 @@
             data: { message: message },
             url: targetUrl
         }).done(function (data) {
-            var messageObj = getMessageObj(settings.you,message);
+            var messageObj = getMessageObj(settings.you, message);
             handleNewMessages(data.uid, messageObj, $chatApplicationElement);
             $textArea.val('');
         });
@@ -146,6 +158,7 @@
         window.addEventListener('focus', () => {
             settings.allowUpdate = 0;
             document.title = settings.windowTitle;
+            submitIsOnline();
         });
 
         $chatApplicationElement.find('textarea.message-input').keyup(function (e) {
@@ -162,10 +175,40 @@
         });
     }
 
+    function handleIsOtherOnline($chatApplicationElement)
+    {
+        var url = settings.urls.get + '&operation=online';
+        doAjaxCall(url, function (data) {
+            settings.othersOnlineState = data.status;
+
+            var $onlineStateElement = $chatApplicationElement.find('.online-state');
+            var defaultClasses = $onlineStateElement.attr('data-default-class');
+
+            switch (settings.othersOnlineState) {
+                case 1:
+                    $onlineStateElement.html($onlineStateElement.attr('data-online-text'));
+                    $onlineStateElement.attr('data-is-online', 1);
+                    $onlineStateElement.attr('class', defaultClasses + ' badge-success');
+                    break;
+                case -1:
+                    $onlineStateElement.html($onlineStateElement.attr('data-away-text'));
+                    $onlineStateElement.attr('data-is-online', -1);
+                    $onlineStateElement.attr('class', defaultClasses + ' badge-warning');
+                    break;
+                default:
+                    $onlineStateElement.html($onlineStateElement.attr('data-offline-text'));
+                    $onlineStateElement.attr('data-is-online', 0);
+                    $onlineStateElement.attr('class', defaultClasses + ' badge-danger');
+                    break;
+            }
+        });
+    }
+
     function initChat($chatApplicationElement)
     {
         initApplicationEvents($chatApplicationElement);
 
+        handleIsOtherOnline($chatApplicationElement);
         handleGetNewMessages($chatApplicationElement);
 
         var interval = (settings.autoUpdateInterval || 0) * 1000;
@@ -178,6 +221,7 @@
                 }
                 return;
             }
+            handleIsOtherOnline($chatApplicationElement);
             handleGetNewMessages($chatApplicationElement);
 
             if (settings.autoUpdateInterval <= 0) {
@@ -241,7 +285,6 @@
             var $chat = $(this);
             $chat.find('.chat-args').each(function () {
                 settings.urls.get = $(this).attr('data-url-get');
-                settings.urls.getNew = $(this).attr('data-url-getnew');
                 settings.autoUpdateInterval = parseInt($(this).attr('data-auto-update-interval') || 0);
                 settings.you = parseInt($(this).attr('data-you') || -1);
                 settings.yourName = $(this).attr('data-your-name') || 'You';
@@ -252,10 +295,12 @@
                 settings.windowTitle = document.title;
                 settings.sh = $(this).attr('data-sh');
                 settings.pl = $(this).attr('data-pl');
+                settings.lastMessageId = 0;
+                settings.othersOnlineState = 0;
 
                 $(this).remove();
 
-                if (!settings.urls.getNew) {
+                if (!settings.urls.get) {
                     return;
                 }
                 updateMessagesScroll($chat);

@@ -31,7 +31,22 @@
         <source>Last message date</source>
       </trans-unit>
       <trans-unit id="chat.user.username" xml:space="preserve">
-        <source>Gebruiker</source>
+        <source>User</source>
+      </trans-unit>
+      <trans-unit id="admin.no.chats" xml:space="preserve">
+        <source>There are currently no chats. Come back later.</source>
+      </trans-unit>
+      <trans-unit id="user.open.chat" xml:space="preserve">
+        <source>Start a new chat</source>
+      </trans-unit>
+      <trans-unit id="status.online" xml:space="preserve">
+        <source>Online</source>
+      </trans-unit>
+      <trans-unit id="status.status.away" xml:space="preserve">
+        <source>Away</source>
+      </trans-unit>
+      <trans-unit id="status.offline" xml:space="preserve">
+        <source>Offline</source>
       </trans-unit>
     </body>
   </file>

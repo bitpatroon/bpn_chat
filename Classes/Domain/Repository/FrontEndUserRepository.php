@@ -171,4 +171,19 @@ class FrontEndUserRepository extends \TYPO3\CMS\Extbase\Domain\Repository\Fronte
 
         return [];
     }
+
+    public function setOnline(int $userId)
+    {
+        $table = self::TABLE;
+
+        /** @var Connection $queryBuilder */
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getConnectionForTable($table);
+
+        $queryBuilder->update(
+            $table,
+            ['is_online' => time()],
+            ['uid' => $userId]
+        );
+    }
 }

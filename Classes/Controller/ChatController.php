@@ -106,6 +106,7 @@ class ChatController extends ActionController
         }
 
         $this->view->assign('chats', $chats);
+        $this->view->assign('isadmin', $this->bpnChatConfiguration->userIsAnAdmin($me) ? 1 : 0);
     }
 
     public function chatAction(int $otherUserId = 0)
@@ -127,7 +128,6 @@ class ChatController extends ActionController
         $this->view->assign('messages', $messages);
         $this->view->assign('receiver', $otherIdsList);
         $this->view->assign('urlget', $this->getUrl('get', $otherIdsList));
-        $this->view->assign('urlgetnew', $this->getUrl('getnew', $otherIdsList));
         $this->view->assign('autoUpdateInterval', $this->bpnChatConfiguration->getAutoUpdateInterval());
         $this->view->assign('isAdmin', in_array($userId, $this->bpnChatConfiguration->getReceiverIds()) ? 1 : 0);
         $this->view->assign('pause_btn_enabled', $this->bpnChatConfiguration->getPauseBtnEnabled() ? 1 : 0);
@@ -240,16 +240,11 @@ class ChatController extends ActionController
         switch ($urlId) {
             case 'get':
                 return sprintf(
-                    "/index.php?eID=tx_bpnchat&operation=get&you=%s&other=%s",
+                    "/index.php?eID=tx_bpnchat&you=%s&other=%s",
                     $this->authorizationService->getUserId(),
                     $otherUserIds
                 );
-            case 'getnew':
-                return sprintf(
-                    "/index.php?eID=tx_bpnchat&operation=getnew&you=%s&other=%s",
-                    $this->authorizationService->getUserId(),
-                    $otherUserIds
-                );
+
             case 'post':
                 return base64_encode(
                     sprintf(
