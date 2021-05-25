@@ -4,11 +4,11 @@
  *  Copyright notice
  *
  *  (c) 2021 Sjoerd Zonneveld  <code@bitpatroon.nl>
- *  Date: 11-5-2021 17:32
+ *  Date: 24-5-2021 17:52
  *
  *  All rights reserved
  *
- *  This script is part of a Bitpatroon project. The project is
+ *  This script is part of the TYPO3 project. The TYPO3 project is
  *  free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -25,18 +25,29 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
-declare(strict_types=1);
+namespace BPN\BpnChat\Traits;
 
-use BPN\BpnChat\Domain\Model\FrontEndUser;
-use BPN\BpnChat\Domain\Model\Message;
+use BPN\BpnChat\Domain\Repository\MessageRepository;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Object\ObjectManager;
 
-return [
-    FrontEndUser::class => [
-        'tableName'  => 'fe_users',
-    ],
-    Message::class => [
-        'properties' => [
-            'crdate' => ['fieldName' => 'crdate'],
-        ]
-    ],
-];
+trait MessageRepositoryTrait
+{
+    /** @var MessageRepository */
+    protected $messageRepository;
+
+    public function injectMessageRepository(MessageRepository $messageRepository) {
+            $this->messageRepository = $messageRepository;
+    }
+
+    public function getMessageRepository(): MessageRepository
+    {
+        if (!$this->messageRepository) {
+            $this->messageRepository = GeneralUtility::makeInstance(ObjectManager::class)
+                ->get(MessageRepository::class);
+        }
+
+        return $this->messageRepository;
+    }
+
+}

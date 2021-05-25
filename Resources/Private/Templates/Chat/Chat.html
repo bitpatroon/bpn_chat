@@ -7,33 +7,45 @@
 
 <f:section name="main">
     <f:variable name="current_user_id"><f:cObject typoscriptObjectPath="lib.userid"/></f:variable>
+    <span class="chat-args"
+          data-url-get="{urlget}"
+          data-url-getnew="{urlgetnew}"
+          data-auto-update-interval="{autoUpdateInterval}"
+          data-you="{current_user_id}"
+          data-your-name="{current_users_name}"
+          data-other="{receiver}"
+          data-admin="{isAdmin}"
+          data-pause-btn-enabled="{pause_btn_enabled}"
+          data-other-party="{receiver}"
+          data-other-party-name="{otherPartyName}"
+    ></span>
     <f:debug title="public\typo3conf\ext\bpn_chat\Resources\Private\Templates\Chat\Chat.html">{_all}</f:debug>
+
     <f:form class="card"
             action="addMessage"
             name="message"
             objectName="{message}"
             object="message">
-        <div class="card-header"><i class="fa fa-comments"></i>&nbsp;Chat</div>
+        <div class="card-header"><i class="fa fa-comments"></i>&nbsp;Chat <span class="btn btn-primary" data-action="pause">[pause]</span></div>
         <ul class="list-group list-group-flush">
-            <li class="list-group-item">### OTHER PARTY</li>
-
+            <li class="list-group-item">{otherPartyName}</li>
             <f:variable name="last_day">0</f:variable>
             <f:for each="{messages}"
                    as="message">
                 <f:variable name="current_day">{f:format.date(date: message.crdate, format: 'd-m-Y')}</f:variable>
                 <f:if condition="{current_day} != {last_day}">
-                    <li class="list-group-item">
+                    <li class="list-group-item" data-caption="1">
                         <h4 class="mt-4">{f:format.date(date: message.crdate, format: 'd-m-Y')}</h4>
                     </li>
                 </f:if>
                 <f:variable name="sendByMe">{f:if(condition:'{message.sender.uid} == {current_user_id}', then:1, else:'')}</f:variable>
-                <li class="list-group-item">
+                <li class="list-group-item" data-uid="{message.uid}">
                     <f:render section="message"
-                              arguments="{sendByMe: sendByMe, message:message}"/>
+                              arguments="{sendByMe: sendByMe, message:message, otherPartyName:otherPartyName}"/>
                 </li>
                 <f:variable name="last_day">{f:format.date(date: message.crdate, format: 'd-m-Y')}</f:variable>
             </f:for>
-            <li class="list-group-item">
+            <li class="list-group-item" data-type="entry-form">
                 <div class="form-row">
                     <div class="col">
                         <f:form.textarea id="message"
@@ -52,40 +64,45 @@
             </li>
         </ul>
         <f:form.hidden name="receiver" value="{receiver}"/>
+        <template class="iamsender">
+            <f:render section="message" arguments="{sendByMe: 1}"/>
+        </template>
+        <template class="iamreceiver">
+            <f:render section="message" arguments="{sendByMe: 0}"/>
+        </template>
     </f:form>
 </f:section>
 
 <f:section name="message">
-    <f:if condition="{sendByMe}">
+    <f:if condition="{sendByMe} == 1">
         <f:then>
             <div class="row">
                 <div class="col-3"></div>
-                <div class="col-9 text-right">
+                <div class="col-9 text-right" data-field="message">
                     <f:format.html>{message.message}</f:format.html>
                 </div>
             </div>
             <div class="row">
                 <div class="col-12 text-right">
-                    <small>{f:format.date(date: message.crdate, format: 'd-m-Y H:i')} |
+                    <small><span data-field="date">{f:format.date(date: message.crdate, format: 'd-m-Y H:i')}</span> |
                         <f:variable name="yourName"><f:translate key="you"/></f:variable>
-                        <chat:friendlyUserName
-                            userid="{message.sender.uid}"
+                        <span data-field="name"><chat:friendlyUserName
+                            user="{message.sender}"
                             fallback="{'admin' : settings.receivers}"
-                            fallbackifself="{yourName}" />
-                    </small>
+                            fallbackifself="{yourName}" /></span></small>
                 </div>
             </div>
         </f:then>
         <f:else>
             <div class="row">
-                <div class="col-9 text-left">
+                <div class="col-9 text-left" data-field="message">
                     <f:format.html>{message.message}</f:format.html>
                 </div>
                 <div class="col-3"></div>
             </div>
             <div class="row">
-                <div class="col-12 text-left"><small>{f:format.date(date: message.crdate, format: 'd-m-Y H:i')} |
-                    <chat:friendlyUserName userid="{message.sender.uid}" fallback="{'admin' : settings.receivers}"/></small>
+                <div class="col-12 text-left"><small><span data-field="date">{f:format.date(date: message.crdate, format: 'd-m-Y H:i')}</span> |
+                    <span data-field="name">{otherPartyName}</span></small>
                 </div>
             </div>
         </f:else>

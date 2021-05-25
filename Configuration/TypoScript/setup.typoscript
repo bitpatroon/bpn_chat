@@ -1,6 +1,9 @@
 plugin.bpnchat_chat {
     settings {
-
+        auto_update_interval = {$plugin.bpnchat_chat.settings.auto_update_interval}
+        pause_btn_enabled = {$plugin.bpnchat_chat.settings.pause_btn_enabled}
+        administrator_name = {$plugin.bpnchat_chat.settings.administrator_name}
+        administrator_name_translate = {$plugin.bpnchat_chat.settings.administrator_name_translate}
     }
 }
 

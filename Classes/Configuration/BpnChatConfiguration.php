@@ -27,7 +27,8 @@
 
 namespace BPN\BpnChat\Configuration;
 
-use BPN\BpnChat\Domain\Repository\FrontendUserRepository;
+use BPN\BpnChat\Traits\FrontEndUserTrait;
+use BPN\BpnChat\Traits\LanguageTrait;
 use BPN\Configuration\Configuration\AbstractExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
@@ -35,6 +36,9 @@ use TYPO3\CMS\Extbase\Persistence\Generic\QuerySettingsInterface;
 
 class BpnChatConfiguration extends AbstractExtensionConfiguration
 {
+    use FrontEndUserTrait;
+    use LanguageTrait;
+
     /**
      * @var string
      */
@@ -45,23 +49,19 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
      */
     protected $receivers;
 
+    /** @var int */
+    protected $autoUpdateInterval = 0;
+
+    /** @var int */
+    protected $pauseBtnEnabled = 0;
+
     /**
-     * @var \BPN\BpnChat\Domain\Model\FrontendUser[]
+     * @var \BPN\BpnChat\Domain\Model\FrontEndUser[]
      */
     protected $receiverModels;
-    /**
-     * @var FrontendUserRepository
-     */
-    protected $frontendUserRepository;
 
-    /**
-     * BpnChatConfiguration constructor.
-     */
-    public function __construct(FrontendUserRepository $frontendUserRepository)
-    {
-        $this->frontendUserRepository = $frontendUserRepository;
-    }
-
+    /** @var string */
+    private $administratorName = 'admin';
 
     /**
      * Initializes the application configuration.
@@ -77,15 +77,45 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
             1620745158
         );
 
+        $this->autoUpdateInterval = (int) $this->getValueFromSettings(
+            $settings,
+            'auto_update_interval'
+        );
+
+        if ($this->autoUpdateInterval < 0) {
+            $this->autoUpdateInterval = 0;
+        }
+
+        $this->pauseBtnEnabled = (int) $this->getValueFromSettings(
+            $settings,
+            'pause_btn_enabled'
+        );
+        $this->pauseBtnEnabled = $this->pauseBtnEnabled ? 1 : 0;
+
+        $administratorName = $this->getValueFromSettings(
+            $settings,
+            'administrator_name'
+        );
+        if ($administratorName) {
+            $this->administratorName = $administratorName;
+        }
+        $administratorNameTranslate = (int) $this->getValueFromSettings(
+            $settings,
+            'administrator_name_translate'
+        );
+        if ($administratorNameTranslate) {
+            $this->administratorName = $this->translate($this->administratorName, true);
+        }
+
         /** @var QuerySettingsInterface $querySettingsInterface */
         $defaultQuerySettings = GeneralUtility::makeInstance(ObjectManager::class)
             ->get(QuerySettingsInterface::class);
         $defaultQuerySettings->setRespectStoragePage(false);
-        $this->frontendUserRepository->setDefaultQuerySettings($defaultQuerySettings);
+        $this->getFrontEndUserRepository()->setDefaultQuerySettings($defaultQuerySettings);
     }
 
     /**
-     * @return \BPN\BpnChat\Domain\Model\FrontendUser[]
+     * @return \BPN\BpnChat\Domain\Model\FrontEndUser[]
      */
     public function getReceivers()
     {
@@ -94,7 +124,7 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
 
             $this->receiverModels = !$this->receivers
                 ? []
-                : $this->frontendUserRepository->getUsersByIds($receivers);
+                : $this->getFrontEndUserRepository()->getUsersByIds($receivers);
         }
 
         return $this->receiverModels;
@@ -108,4 +138,28 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
         return GeneralUtility::intExplode(',', $this->receivers);
     }
 
+    public function getAutoUpdateInterval()
+    {
+        return $this->autoUpdateInterval;
+    }
+
+    public function userIsAnAdmin(int $userId): bool
+    {
+        $receiverIds = $this->getReceiverIds();
+
+        return in_array($userId, $receiverIds);
+    }
+
+    /**
+     * @return int
+     */
+    public function getPauseBtnEnabled(): int
+    {
+        return $this->pauseBtnEnabled;
+    }
+
+    public function getAdministratorName()
+    {
+        return $this->administratorName;
+    }
 }

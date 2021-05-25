@@ -4,11 +4,11 @@
  *  Copyright notice
  *
  *  (c) 2021 Sjoerd Zonneveld  <code@bitpatroon.nl>
- *  Date: 11-5-2021 17:32
+ *  Date: 24-5-2021 15:21
  *
  *  All rights reserved
  *
- *  This script is part of a Bitpatroon project. The project is
+ *  This script is part of the TYPO3 project. The TYPO3 project is
  *  free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -25,18 +25,13 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
-declare(strict_types=1);
+namespace BPN\BpnChat\Traits;
 
-use BPN\BpnChat\Domain\Model\FrontEndUser;
-use BPN\BpnChat\Domain\Model\Message;
+final class TraitConstants
+{
+    const SECRET = 'rw@7S68zK6M&H8RU';
 
-return [
-    FrontEndUser::class => [
-        'tableName'  => 'fe_users',
-    ],
-    Message::class => [
-        'properties' => [
-            'crdate' => ['fieldName' => 'crdate'],
-        ]
-    ],
-];
+    private function __construct()
+    {
+    }
+}

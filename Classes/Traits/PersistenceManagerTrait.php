@@ -4,7 +4,7 @@
  *  Copyright notice
  *
  *  (c) 2021 Sjoerd Zonneveld  <code@bitpatroon.nl>
- *  Date: 11-5-2021 17:09
+ *  Date: 24-5-2021 17:53
  *
  *  All rights reserved
  *
@@ -25,9 +25,30 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
-namespace BPN\BpnChat\Domain\Model;
+namespace BPN\BpnChat\Traits;
 
-class FrontendUser extends \TYPO3\CMS\Extbase\Domain\Model\FrontendUser
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Object\ObjectManager;
+use TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface;
+
+trait PersistenceManagerTrait
 {
+    /** @var PersistenceManagerInterface */
+    protected $persistenceManager;
+
+    public function injectPersistenceManagerInterface(PersistenceManagerInterface $persistenceManagerInterface)
+    {
+        $this->persistenceManager = $persistenceManagerInterface;
+    }
+
+    public function getPersistenceManager(): PersistenceManagerInterface
+    {
+        if (!$this->persistenceManager) {
+            $this->persistenceManager = GeneralUtility::makeInstance(ObjectManager::class)
+                ->get(PersistenceManagerInterface::class);
+        }
+
+        return $this->persistenceManager;
+    }
 
 }

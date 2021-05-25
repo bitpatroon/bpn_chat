@@ -27,41 +27,28 @@
 
 namespace BPN\BpnChat\ViewHelpers;
 
-use BPN\BpnChat\Domain\Repository\FrontendUserRepository;
-use BPN\BpnChat\Services\AuthorizationService;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
+use BPN\BpnChat\Traits\AuthorizationServiceTrait;
+use BPN\BpnChat\Traits\FrontEndUserTrait;
+use BPN\BpnChat\Traits\NameServiceTrait;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 class FriendlyUserNameViewHelper extends AbstractViewHelper
 {
-    /**
-     * @var FrontendUserRepository
-     */
-    protected $frontendUserRepository;
-
-    /** @var AuthorizationService */
-    protected $authorizationService;
+    use NameServiceTrait;
+    use FrontEndUserTrait;
+    use AuthorizationServiceTrait;
 
     public function initializeArguments()
     {
         parent::initializeArguments();
         $this->registerArgument('userid', 'int', 'Id of the user');
+        $this->registerArgument('user', 'array', 'The fields of the user');
         $this->registerArgument('fallback', 'array', 'A collection of key (fallbacktext) and values (id list)');
         $this->registerArgument(
             'fallbackifself',
             'string',
             'Your name / reference, if you were the admin. Displays the email / username otherwise'
         );
-    }
-
-    public function injectFrontendUserRepository(FrontendUserRepository $frontendUserRepository
-    ) {
-        $this->frontendUserRepository = $frontendUserRepository;
-    }
-
-    public function injectAuthorizationService(AuthorizationService $authorizationService)
-    {
-        $this->authorizationService = $authorizationService;
     }
 
     /**
@@ -71,53 +58,14 @@ class FriendlyUserNameViewHelper extends AbstractViewHelper
     {
         $userId = (int) trim($this->arguments['userid']);
 
-        if($this->authorizationService->getUserId() === $userId){
+        if ($this->authorizationService->getUserId() === $userId) {
             $fallBackYou = trim($this->arguments['fallbackifself']);
-            if($fallBackYou){
+            if ($fallBackYou) {
                 return $fallBackYou;
             }
         }
 
-        $user = $this->frontendUserRepository->findByUid($userId);
-
-        if (!$user) {
-            return '[user]';
-        }
-
-        $result = [
-            0 => $user->getFirstName(),
-            100 => $user->getLastName(),
-        ];
-
-        if ($user->getMiddleName()) {
-            $result[50] = $user->getMiddleName();
-        }
-
-        $result = implode(' ', $result);
-        $result = trim($result);
-        if (!$result) {
-            $result = $this->getFallBackName($this->arguments['userid']);
-            if (!$result) {
-                $result = sprintf('[user: %s]', $this->arguments['userid']);
-            }
-        }
-
-        return $result;
-    }
-
-    private function getFallBackName($userid)
-    {
-        $fallBack = $this->arguments['fallback'];
-
-        if ($fallBack && is_array($fallBack)) {
-            foreach ($fallBack as $key => $value) {
-                $items = GeneralUtility::intExplode(',', $value);
-                if (in_array($userid, $items)) {
-                    return $key;
-                }
-            }
-        }
-
-        return '';
+        $user = $this->arguments['user'];
+        return $this->getNameService()->getFullName($user);
     }
 }

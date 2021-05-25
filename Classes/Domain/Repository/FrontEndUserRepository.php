@@ -27,20 +27,49 @@
 
 namespace BPN\BpnChat\Domain\Repository;
 
-use BPN\BpnChat\Domain\Model\FrontendUser;
+use BPN\BpnChat\Traits\RepositoryTrait;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Persistence\Generic\Typo3QuerySettings;
 
-class FrontendUserRepository extends \TYPO3\CMS\Extbase\Domain\Repository\FrontendUserRepository
+class FrontEndUserRepository extends \TYPO3\CMS\Extbase\Domain\Repository\FrontendUserRepository
 {
+    use RepositoryTrait;
+
     // Example for repository wide settings
+    const TABLE = 'fe_users';
+
     public function initializeObject()
     {
         $querySettings = new Typo3QuerySettings();
         $querySettings->setRespectStoragePage(false);
         $this->setDefaultQuerySettings($querySettings);
+    }
+
+    public function findAllAssociativeByUid(array $userIds, $fields = '*')
+    {
+        $table = self::TABLE;
+        /** @var QueryBuilder $queryBuilder */
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
+
+        $fieldsCollection = GeneralUtility::trimExplode(',', $fields);
+
+        $queryBuilder
+            ->select(...$fieldsCollection)
+            ->from($table)
+            ->where(
+                $queryBuilder->expr()->in(
+                    'uid',
+                    $queryBuilder->createNamedParameter($userIds, Connection::PARAM_INT_ARRAY)
+                ),
+            );
+
+        $data = $queryBuilder->execute()->fetchAllAssociative();
+
+        return $this->setResultIndexField($data);
     }
 
     public function findAllByUid(?array $chatPartnerIds)
@@ -55,17 +84,11 @@ class FrontendUserRepository extends \TYPO3\CMS\Extbase\Domain\Repository\Fronte
     public function getUsersByIds(array $uids): array
     {
         $query = $this->createQuery();
-         $query->matching($query->in('uid', $uids));
+        $query->matching($query->in('uid', $uids));
 
         $data = $query->execute()->toArray();
-        $result = [];
-        if($data){
-            /** @var FrontendUser $user */
-            foreach($data as $user){
-                $result[$user->getUid()] = $user;
-            }
-        }
-        return $result;
+
+        return $this->setResultIndexField($data);
     }
 
     /**
@@ -91,14 +114,7 @@ class FrontendUserRepository extends \TYPO3\CMS\Extbase\Domain\Repository\Fronte
 
         $data = $queryBuilder->execute()->fetchAllAssociative();
 
-        $result = [];
-        if ($data) {
-            foreach ($data as $row) {
-                $result[(int) $row['uid']] = $row['email'];
-            }
-        }
-
-        return $result;
+        return $this->setResultIndexField($data);
     }
 
     /**
@@ -127,5 +143,30 @@ class FrontendUserRepository extends \TYPO3\CMS\Extbase\Domain\Repository\Fronte
         }
 
         return '';
+    }
+
+    public function getUserRecordByUid(int $userId)
+    {
+        $table = self::TABLE;
+        /** @var QueryBuilder $queryBuilder */
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
+
+        $queryBuilder
+            ->select('*')
+            ->from($table)
+            ->where($queryBuilder->expr()->eq('uid', $userId));
+
+        return $queryBuilder->execute()->fetchAssociative();
+    }
+
+    public function getFirstByUids(array $ids): array
+    {
+        $all = $this->findAllAssociativeByUid($ids);
+        if ($all) {
+            return current($all);
+        }
+
+        return [];
     }
 }

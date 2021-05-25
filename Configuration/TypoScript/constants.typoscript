@@ -1,3 +1,8 @@
-plugin.tx_bpnchat_chat {
-
+plugin.bpnchat_chat {
+    settings {
+        auto_update_interval = 20
+        pause_btn_enabled = 0
+        administrator_name = admin.name
+        administrator_name_translate = 1
+    }
 }

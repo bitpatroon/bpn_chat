@@ -4,7 +4,7 @@
  *  Copyright notice
  *
  *  (c) 2021 Sjoerd Zonneveld  <code@bitpatroon.nl>
- *  Date: 11-5-2021 17:54
+ *  Date: 22-5-2021 17:00
  *
  *  All rights reserved
  *
@@ -25,43 +25,30 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
-namespace BPN\BpnChat\Backend\UserFunctions;
+namespace BPN\BpnChat\Traits;
 
 use BPN\BpnChat\Domain\Repository\FrontEndUserRepository;
-use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 
-class MessageTitle
+trait FrontEndUserTrait
 {
-    public function displayTitle(&$parameters)
+    /** @var FrontEndUserRepository */
+    protected $frontEndUserRepository;
+
+    public function injectFrontEndUserRepository(FrontEndUserRepository $frontEndUserRepository)
     {
-        $record = BackendUtility::getRecord($parameters['table'], $parameters['row']['uid']);
-
-        $receiverList = $record['receivers'];
-        $receivers = GeneralUtility::intExplode(',', $receiverList);
-
-        if (!$record['sender']) {
-            return;
-        }
-
-        $senderEmail = $this->getFrontEndUserRepository()->getEmail($record['sender']);
-        $result = [$senderEmail];
-        $receiver = $receivers ? $this->getFrontEndUserRepository()->getEmail(current($receivers)) : '';
-        if ($receiver) {
-            $result[] = $receiver;
-        }
-
-        $parameters['title'] .= substr(implode(' -> ', $result), 0, 60);
+        $this->frontEndUserRepository = $frontEndUserRepository;
     }
 
-    /**
-     * @return FrontEndUserRepository
-     */
-    public function getFrontEndUserRepository()
+    public function getFrontEndUserRepository(): FrontEndUserRepository
     {
-        /* @var FrontEndUserRepository $frontendUserRepository */
-        return GeneralUtility::makeInstance(ObjectManager::class)
-            ->get(FrontEndUserRepository::class);
+        if (!$this->frontEndUserRepository) {
+            /* @var FrontEndUserRepository $frontEndUserRepository */
+            $this->frontEndUserRepository = GeneralUtility::makeInstance(ObjectManager::class)
+                ->get(FrontEndUserRepository::class);
+        }
+
+        return $this->frontEndUserRepository;
     }
 }

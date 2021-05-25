@@ -6,14 +6,13 @@
 <f:layout name="Default"/>
 
 <f:section name="main">
-    <f:debug title="public\typo3conf\ext\bpn_chat\Resources\Private\Templates\Chat\Index.html">{_all}</f:debug>
     <f:if condition="{chats}">
         <ul>
             <f:for each="{chats}"
                    as="chat">
                 <li>
                     <f:link.action action="chat"
-                                   arguments="{userId: chat.uid }">{chat.username}
+                                   arguments="{otherUserId: chat.uid }">{chat.username}
                     </f:link.action>
                 </li>
             </f:for>

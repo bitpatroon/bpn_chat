@@ -27,55 +27,32 @@
 
 namespace BPN\BpnChat\Controller;
 
-use BPN\BpnChat\Configuration\BpnChatConfiguration;
+use BPN\BpnChat\Domain\Model\FrontEndUser;
 use BPN\BpnChat\Domain\Model\Message;
-use BPN\BpnChat\Domain\Repository\FrontendUserRepository;
-use BPN\BpnChat\Domain\Repository\MessageRepository;
-use BPN\BpnChat\Services\AuthorizationService;
+use BPN\BpnChat\Traits\AuthorizationServiceTrait;
+use BPN\BpnChat\Traits\BpnChatConfigurationTrait;
+use BPN\BpnChat\Traits\FrontEndUserTrait;
+use BPN\BpnChat\Traits\LanguageTrait;
+use BPN\BpnChat\Traits\MessageRepositoryTrait;
+use BPN\BpnChat\Traits\MessageServiceTrait;
+use BPN\BpnChat\Traits\NameServiceTrait;
+use BPN\BpnChat\Traits\PageRendererTrait;
+use BPN\BpnChat\Traits\PersistenceManagerTrait;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Extbase\Persistence\Generic\QuerySettingsInterface;
-use TYPO3\CMS\Extbase\Persistence\PersistenceManagerInterface;
 
 class ChatController extends ActionController
 {
-    /**
-     * @var AuthorizationService
-     */
-    protected $authorizationService;
-    /**
-     * @var BpnChatConfiguration
-     */
-    protected $configuration;
-    /**
-     * @var FrontendUserRepository
-     */
-    protected $frontendUserRepository;
-    /**
-     * @var PersistenceManagerInterface
-     */
-    protected $persistenceManager;
-    /**
-     * @var MessageRepository
-     */
-    protected $messageRepository;
-
-    /**
-     * ChatController constructor.
-     */
-    public function __construct(
-        AuthorizationService $authorizationService,
-        BpnChatConfiguration $configuration,
-        FrontendUserRepository $frontendUserRepository,
-        MessageRepository $messageRepository,
-        PersistenceManagerInterface $persistenceManager
-    ) {
-        $this->authorizationService = $authorizationService;
-        $this->configuration = $configuration;
-        $this->frontendUserRepository = $frontendUserRepository;
-        $this->persistenceManager = $persistenceManager;
-        $this->messageRepository = $messageRepository;
-    }
+    use AuthorizationServiceTrait;
+    use BpnChatConfigurationTrait;
+    use FrontEndUserTrait;
+    use MessageRepositoryTrait;
+    use MessageServiceTrait;
+    use PersistenceManagerTrait;
+    use PageRendererTrait;
+    use LanguageTrait;
+    use NameServiceTrait;
 
     protected function initializeAction()
     {
@@ -97,6 +74,8 @@ class ChatController extends ActionController
                 $this->messageRepository->setDefaultQuerySettings($defaultQuerySettings);
             }
         }
+
+        $this->addJsFooterFile('/typo3conf/ext/bpn_chat/Resources/Public/JavaScript/chat.js');
     }
 
     public function indexAction()
@@ -104,24 +83,41 @@ class ChatController extends ActionController
         $chatIds = $this->messageRepository->getChatPartnerIds($this->authorizationService->getUserId());
         $chatIds = $this->addAdmins($chatIds);
 
-        $chats = $this->frontendUserRepository->findAllByUid($chatIds);
+        $chats = $this->frontEndUserRepository->findAllByUid($chatIds);
 
         $this->view->assign('chats', $chats);
     }
 
-    public function chatAction(int $userId = 0)
+    public function chatAction(int $otherUserId = 0)
     {
-        if ($userId) {
-            $others = [$userId];
-        } else {
-            $others = $this->configuration->getReceiverIds();
-        }
+        $userId = $this->authorizationService->getUserId();
+        $senderIds = $this->messageService->getUserIds($userId);
+        $otherUserIds = $this->messageService->getUserIds($otherUserId);
 
-        $messages = $this->messageRepository->getNewMessages($this->authorizationService->getUserId(), $others);
+        $messages = $this->messageRepository->getLastMessages($senderIds, $otherUserIds);
 
+        $otherIdsList = implode(',', $otherUserIds);
         // Retrieve all messages of userA with userB with user A = self
         $this->view->assign('messages', $messages);
-        $this->view->assign('receiver', $userId);
+        $this->view->assign('receiver', $otherIdsList);
+        $this->view->assign('urlget', $this->getUrl('get', $otherIdsList));
+        $this->view->assign('urlgetnew', $this->getUrl('getnew', $otherIdsList));
+        $this->view->assign('autoUpdateInterval', $this->bpnChatConfiguration->getAutoUpdateInterval());
+        $this->view->assign('isAdmin', in_array($userId, $this->bpnChatConfiguration->getReceiverIds()) ? 1 : 0);
+        $this->view->assign('pause_btn_enabled', $this->bpnChatConfiguration->getPauseBtnEnabled() ? 1 : 0);
+
+        $otherPartyName = $this->translate('user.unknown');
+        if (in_array(0, $otherUserIds, true)) {
+            $otherPartyName = $this->bpnChatConfiguration->getAdministratorName();
+        } else {
+            /** @var FrontEndUser $otherPartyUser */
+            $otherPartyUser = $this->frontEndUserRepository->getFirstByUids($otherUserIds);
+            if ($otherPartyUser) {
+                $otherPartyName = $otherPartyUser->getName();
+            }
+        }
+        $this->view->assign('otherPartyName', $otherPartyName);
+        $this->view->assign('current_users_name', $this->getNameService()->getFullName($userId));
     }
 
     public function addMessageAction(Message $message, int $receiver = 0, bool $redirect = true)
@@ -131,11 +127,11 @@ class ChatController extends ActionController
 
         if (0 === $message->getReceivers()->count()) {
             if ($receiver) {
-                $message->addReceiver($this->frontendUserRepository->findByUid($receiver));
-
-            // allow adding sys admins in general
+                $receiverUser = $this->frontEndUserRepository->findByUid($receiver);
+                $message->addReceiver($receiverUser);
+                // allow adding sys admins in general
             } else {
-                $receivers = $this->configuration->getReceivers();
+                $receivers = $this->bpnChatConfiguration->getReceivers();
                 if (!$receivers) {
                     $this->error('no_receivers_set', 1620811702, true);
 
@@ -153,7 +149,7 @@ class ChatController extends ActionController
         $this->persistenceManager->persistAll();
 
         if ($redirect) {
-            $this->forward('chat', null, null, ['userId' => $receiver]);
+            $this->forward('chat', null, null, ['otherUserId' => $receiver]);
         }
     }
 
@@ -205,5 +201,25 @@ class ChatController extends ActionController
         }
 
         return $chatPartnerIds;
+    }
+
+    private function getUrl(string $urlId, string $otherUserIds)
+    {
+        switch ($urlId) {
+            case 'get':
+                return sprintf(
+                    "/index.php?eID=tx_bpnchat&operation=get&you=%s&other=%s",
+                    $this->authorizationService->getUserId(),
+                    $otherUserIds
+                );
+            case 'getnew':
+                return sprintf(
+                    "/index.php?eID=tx_bpnchat&operation=getnew&you=%s&other=%s",
+                    $this->authorizationService->getUserId(),
+                    $otherUserIds
+                );
+            default:
+                return '';
+        }
     }
 }

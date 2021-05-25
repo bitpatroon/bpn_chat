@@ -27,24 +27,35 @@
 
 namespace BPN\BpnChat\Domain\Repository;
 
+use BPN\BpnChat\Traits\FrontEndUserTrait;
+use BPN\BpnChat\Traits\NameServiceTrait;
+use BPN\BpnChat\Traits\RepositoryTrait;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\Expression\CompositeExpression;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Extbase\Persistence\Repository;
 
 class MessageRepository extends Repository
 {
+    use FrontEndUserTrait;
+    use NameServiceTrait;
+    use RepositoryTrait;
+
+    const TABLE = 'tx_bpnchat_domain_model_message';
+
     public function getChatPartnerIds(int $userId)
     {
         /** Connection $connection */
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)
-            ->getConnectionForTable('tx_bpnchat_domain_model_message');
+            ->getConnectionForTable(self::TABLE);
 
         // messages where userid the sender
         $dataIsSender = $connection
             ->select(
                 ['receivers'],
-                'tx_bpnchat_domain_model_message',
+                self::TABLE,
                 ['sender' => $userId, 'delivered' => 0],
                 ['receivers']
             )
@@ -53,68 +64,246 @@ class MessageRepository extends Repository
         $dataIsReceiver = $connection
             ->select(
                 ['sender'],
-                'tx_bpnchat_domain_model_message',
+                self::TABLE,
                 ['receivers' => $userId, 'delivered' => 0],
                 ['sender']
             )
             ->fetchAllAssociative();
 
-        // messages where I am the receiver
-
         $rows = [];
         if ($dataIsSender) {
             foreach ($dataIsSender as $row) {
-                $rows[(int)$row['receivers']] = (int)$row['receivers'];
+                $rows[(int) $row['receivers']] = (int) $row['receivers'];
             }
         }
         if ($dataIsReceiver) {
             foreach ($dataIsReceiver as $row) {
-                $rows[(int)$row['sender']] = (int)$row['sender'];
+                $rows[(int) $row['sender']] = (int) $row['sender'];
             }
         }
 
         return $rows;
     }
 
-    public function getNewMessages(int $userId, array $other = [])
+    public function getLastMessages(array $userIds, array $otherUserIds, int $limit = 50)
     {
-        $query = $this->createQuery();
+        $table = self::TABLE;
 
-        // user is sender
-        $constraintsUserIsSender = [
-            $query->equals('sender', $userId)
-        ];
-        $constraintsUserIsReceiver = [
-            $query->contains('receivers', $userId)
-        ];
+        /** @var QueryBuilder $queryBuilder */
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
 
-        $constraintsOtherIsReceiver = [];
-        $constraintsOtherIsSender = [];
-        if ($other) {
-            foreach ($other as $item) {
-                $constraintsOtherIsReceiver[] = $query->contains('receivers', $item);
-                $constraintsOtherIsSender[] = $query->equals('sender', $item);
-            }
+        $where = $this->getConditions($queryBuilder, $userIds, $otherUserIds);
+
+        $queryBuilder
+            ->select('*')
+            ->from($table)
+            ->where($where)
+            ->orderBy('crdate')
+            ->setMaxResults($limit);
+
+        $rows = $queryBuilder->execute()->fetchAllAssociative();
+        $this->setFullStatement($queryBuilder);
+
+        $rows = $this->linkSenderReceivers($rows, $userIds, $otherUserIds);
+        $rows = $this->setResultIndexField($rows);
+
+        // $this->markMyMessageDelivered($rows, $userIds);
+
+        return $rows;
+    }
+
+    public function getNewMessages(array $userIds, array $otherUserIds)
+    {
+        $table = self::TABLE;
+        /** @var QueryBuilder $queryBuilder */
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
+
+        $where = [];
+        $where[] = $this->getConditions($queryBuilder, $userIds, $otherUserIds);
+        $where[] = $queryBuilder->expr()->eq('delivered', 0);
+
+        $queryBuilder
+            ->select('*')
+            ->from($table)
+            ->where($queryBuilder->expr()->andX(...$where))
+            ->orderBy('crdate');
+
+        $rows = $queryBuilder->execute()->fetchAllAssociative();
+        $rows = $this->linkSenderReceivers($rows, $userIds, $otherUserIds);
+        $rows = $this->setResultIndexField($rows);
+
+//        $this->markMyMessageDelivered($rows, $userIds);
+
+        return $rows;
+    }
+
+    protected function linkSenderReceivers(array $rows, array $senderIds, array $receiverIds)
+    {
+        if (!$rows) {
+            return [];
         }
 
-        $constraintsUserIsSender[] = $query->logicalOr($constraintsOtherIsReceiver);
-        $constraintsUserIsReceiver[] = $query->logicalOr($constraintsOtherIsSender);
+        $userIds = $senderIds;
+        if (!$userIds) {
+            $userIds = [];
+        }
+        if ($receiverIds) {
+            $userIds[] = array_merge($userIds, $receiverIds);
+        }
+        if (!$userIds) {
+            return $rows;
+        }
 
-        // all!
-        $query
-            ->matching(
-                $query->logicalOr(
-                    [
-                        $query->logicalAnd($constraintsUserIsSender),
-                        $query->logicalAnd($constraintsUserIsReceiver)
-                    ]
-                )
-            );
+        /** @var array $users */
+        $users = $this->getFrontEndUserRepository()->findAllAssociativeByUid(
+            $userIds,
+            'uid,pid,first_name,middle_name,last_name,email,username'
+        );
 
-        $query->setOrderings(['crdate' => QueryInterface::ORDER_ASCENDING]);
+        foreach ($users as &$user) {
+            $user['name'] = $this->getNameService()->getFullName($user);
+        }
+        unset ($user);
 
-        return $query->execute()->toArray();
+        $adminUserRow = [
+            'uid'      => 0,
+            'pid'      => 0,
+            'name'     => 'Admin',
+            'email'    => '',
+            'username' => '',
+        ];
+
+        $unknownUserRow = [
+            'uid'      => 0,
+            'pid'      => 0,
+            'name'     => 'Unknown',
+            'email'    => '',
+            'username' => '',
+        ];
+
+        $result = [];
+        foreach ($rows as $row) {
+            $senderId = (int) $row['sender'];
+            if ($senderId) {
+                if (isset($users[$senderId])) {
+                    $row['sender'] = $users[$senderId];
+                } else {
+                    $row['sender'] = $unknownUserRow;
+                }
+            } else {
+                $row['sender'] = $adminUserRow;
+            }
+
+            if (!$row['receivers']) {
+                $row['receivers'] = [$adminUserRow];
+            } else {
+                $receivers = [];
+                $receiverIds = GeneralUtility::intExplode(',', ''.$row['receivers']);
+                foreach ($receiverIds as $receiver) {
+                    if (isset($users[$receiver])) {
+                        $receivers[$receiver] = $users[$receiver];
+                    } else {
+                        $receivers[$receiver] = $unknownUserRow;
+                    }
+                }
+                $row['receivers'] = $receivers;
+            }
+
+            $result[] = $row;
+        }
+
+        return $result;
     }
+
+    protected function getConditions(
+        QueryBuilder $queryBuilder,
+        array $userIds,
+        array $otherUserIds
+    ): CompositeExpression {
+        $constraintsUserAsSender = [];
+        $constraintsUserAsReceiver = [];
+        foreach ($userIds as $id) {
+            $constraintsUserAsSender[] = $queryBuilder->expr()->eq('sender', $id);
+            $constraintsUserAsReceiver[] = $queryBuilder->expr()->inset(
+                'receivers',
+                $queryBuilder->createNamedParameter($id, Connection::PARAM_STR)
+            );
+        }
+
+        $constraintsOtherAsSender = [];
+        $constraintsOtherAsReceiver = [];
+        foreach ($otherUserIds as $id) {
+            $constraintsOtherAsSender[] = $queryBuilder->expr()->eq('sender', $id);
+            $constraintsOtherAsReceiver[] = $queryBuilder->expr()->inset(
+                'receivers',
+                $queryBuilder->createNamedParameter($id, Connection::PARAM_STR)
+            );
+        }
+
+        // user is sender
+        $userIsSender = $queryBuilder->expr()->andX(
+            $queryBuilder->expr()->orX(...$constraintsUserAsSender),
+            $queryBuilder->expr()->orX(...$constraintsOtherAsReceiver),
+        );
+
+        // user is receiver
+        $userIsReceiver = $queryBuilder->expr()->andX(
+            $queryBuilder->expr()->orX(...$constraintsOtherAsSender),
+            $queryBuilder->expr()->orX(...$constraintsUserAsReceiver),
+        );
+
+        return $queryBuilder->expr()->orX($userIsSender, $userIsReceiver);
+    }
+
+    protected function markMyMessageDelivered(array $rows, array $userIds)
+    {
+        if (!$rows) {
+            return;
+        }
+
+        krsort($rows);
+
+        $uids = [];
+
+        $removeMySendMessages = true;
+
+        // remove my last message where other party has not seen them
+        foreach ($rows as $key => $row) {
+            if ($removeMySendMessages) {
+                // find all older messages where I am the sender; remove!
+                $sender = (int) $row['sender']['uid'];
+                if (in_array($sender, $userIds)) {
+                    // I am the sender, ignore
+                    continue;
+                }
+            }
+            $removeMySendMessages = false;
+            $uids[$key] = $key;
+        }
+
+        if (!$uids) {
+            return;
+        }
+
+        $table = self::TABLE;
+        /** @var QueryBuilder $queryBuilder */
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
+
+        $queryBuilder
+            ->update($table)
+            ->set('delivered', 1, false, Connection::PARAM_INT)
+            ->where(
+                $queryBuilder->expr()->in(
+                    'uid',
+                    $queryBuilder->createNamedParameter($uids, Connection::PARAM_INT_ARRAY)
+                ),
+            )
+            ->execute();
+    }
+
 
     public function findBySender(int $userId)
     {
@@ -135,5 +324,6 @@ class MessageRepository extends Repository
 
         return $query->execute();
     }
+
 
 }
