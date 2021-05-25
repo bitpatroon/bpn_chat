@@ -63,6 +63,12 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
     /** @var string */
     private $administratorName = 'admin';
 
+    /** @var int */
+    private $debug = 0;
+
+    /** @var int */
+    private $showDate = 0;
+
     /**
      * Initializes the application configuration.
      *
@@ -107,6 +113,9 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
             $this->administratorName = $this->translate($this->administratorName, true);
         }
 
+        $this->debug = ((int) $this->getValueFromSettings($settings, 'debug')) ? 1 : 0;
+        $this->showDate = ((int) $this->getValueFromSettings($settings, 'show_message_dates')) ? 1 : 0;
+
         /** @var QuerySettingsInterface $querySettingsInterface */
         $defaultQuerySettings = GeneralUtility::makeInstance(ObjectManager::class)
             ->get(QuerySettingsInterface::class);
@@ -119,7 +128,7 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
      */
     public function getReceivers()
     {
-        if ($this->receiverModels === null) {
+        if (null === $this->receiverModels) {
             $receivers = GeneralUtility::intExplode(',', $this->receivers);
 
             $this->receiverModels = !$this->receivers
@@ -140,7 +149,7 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
 
     public function getAutoUpdateInterval()
     {
-        return $this->autoUpdateInterval;
+        return $this->autoUpdateInterval ?? 10;
     }
 
     public function userIsAnAdmin(int $userId): bool
@@ -150,9 +159,6 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
         return in_array($userId, $receiverIds);
     }
 
-    /**
-     * @return int
-     */
     public function getPauseBtnEnabled(): int
     {
         return $this->pauseBtnEnabled;
@@ -161,5 +167,15 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
     public function getAdministratorName()
     {
         return $this->administratorName;
+    }
+
+    public function getDebug(): int
+    {
+        return $this->debug ?? 0;
+    }
+
+    public function getShowDate(): int
+    {
+        return $this->showDate ?? 0;
     }
 }

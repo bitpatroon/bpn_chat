@@ -46,7 +46,9 @@
     {
         var itemAlreadyVisible = $chatApplicationElement.find('li[data-uid="' + uid + '"]').length >= 1;
         if (itemAlreadyVisible) {
-            console.log('chat.js:1621930698247:', uid + ' is already rendered.');
+            if (settings.debug) {
+                console.log('chat.js:1621930698247:', uid + ' is already rendered.');
+            }
             return;
         }
         var templateProps = determineMessagesProps(uid, messageObj);
@@ -65,8 +67,9 @@
     {
         getNewMessages(settings.urls.getNew, function (data) {
             if (!data.messages) {
-                // no updates
-                console.log('chat.js:1621880977751:', 'No new messages');
+                if (settings.debug) {
+                    console.log('chat.js:1621880977751:', 'No new messages');
+                }
                 return;
             }
 
@@ -88,7 +91,9 @@
 
             var pause = window.pause || 0;
             if (pause) {
-                console.log('chat.js:1621890443460:', 'paused');
+                if (settings.debug) {
+                    console.log('chat.js:1621890443460:', 'paused');
+                }
                 return;
             }
             handleGetNewMessages($chatApplicationElement);
@@ -104,25 +109,48 @@
         var $pauseButton = $chatApplicationElement.find('[data-action="pause"]');
         if (!settings.pauseBtnEnabled) {
             $pauseButton.remove();
+        } else {
+            $pauseButton.show();
+            $pauseButton.click(function () {
+                var paused = window.pause || 0;
+                var $icon = $(this).find('i');
+                if (paused !== 0) {
+                    if (settings.debug){
+                        console.log('chat.js:1621945717098:', 'continue');
+                    }
+                    window.pause = 0;
+                    $icon.attr('class', $icon.attr('data-on'))
 
-            return;
+                } else {
+                    if (settings.debug){
+                        console.log('chat.js:1621945717098:', 'stopped');
+                    }
+                    window.pause = 1;
+                    $icon.attr('class', $icon.attr('data-off'))
+                }
+            });
         }
 
-        $pauseButton.click(function () {
-            var paused = $(this).attr('data-paused');
-            if (paused === '1') {
-                $(this).attr('data-paused', 0);
-                $(this).html('Running');
-                $(this).addClass('btn-primary');
-                window.pause = 0;
-
-            } else {
-                $(this).attr('data-paused', 1);
-                window.pause = 1;
-                $(this).html('Stopped');
-                $(this).removeClass('btn-primary');
-            }
-        });
+        var $infoButton = $chatApplicationElement.find('[data-action="show_date"]');
+        if(parseInt($infoButton.attr('data-show-date') || 0)) {
+            $infoButton.show();
+            $infoButton.click(function () {
+                var showDate = parseInt($(this).attr('data-show-date') || 1);
+                var $icon = $(this).find('i');
+                if (showDate === 1) {
+                    $(this).attr('data-show-date', 0);
+                    $icon.attr('class', $icon.attr('data-off'))
+                    $chatApplicationElement.addClass('state-no-date');
+                } else {
+                    $(this).attr('data-show-date', 1);
+                    $icon.attr('class', $icon.attr('data-on'))
+                    $chatApplicationElement.removeClass('state-no-date');
+                }
+            });
+        } else {
+            $chatApplicationElement.addClass('state-no-date');
+            $infoButton.remove();
+        }
     }
 
     function initChatApplications()
@@ -138,6 +166,7 @@
                 settings.amAdmin = parseInt($(this).attr('data-admin') || -1);
                 settings.pauseBtnEnabled = parseInt($(this).attr('data-pause-btn-enabled') || 0);
                 settings.otherPartyName = $(this).attr('data-other-party-name');
+                settings.debug = parseInt($(this).attr('data-debug') || 0);
 
                 $(this).remove();
 
@@ -176,7 +205,9 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         if (window.bpn_chat) {
-            console.log('bpn_chat is already intialised by another instance. Stopping.');
+            if (settings.debug) {
+                console.log('bpn_chat is already intialised by another instance. Stopping.');
+            }
             return;
         }
         window.bpn_chat = 1;

@@ -75,6 +75,7 @@ class ChatController extends ActionController
             }
         }
 
+        $this->addCSSFile('/typo3conf/ext/bpn_chat/Resources/Public/CSS/chat.css');
         $this->addJsFooterFile('/typo3conf/ext/bpn_chat/Resources/Public/JavaScript/chat.js');
     }
 
@@ -105,6 +106,8 @@ class ChatController extends ActionController
         $this->view->assign('autoUpdateInterval', $this->bpnChatConfiguration->getAutoUpdateInterval());
         $this->view->assign('isAdmin', in_array($userId, $this->bpnChatConfiguration->getReceiverIds()) ? 1 : 0);
         $this->view->assign('pause_btn_enabled', $this->bpnChatConfiguration->getPauseBtnEnabled() ? 1 : 0);
+        $this->view->assign('debug', $this->bpnChatConfiguration->getDebug() ? 1 : 0);
+        $this->view->assign('show_date', $this->bpnChatConfiguration->getShowDate() ? 1 : 0);
 
         $otherPartyName = $this->translate('user.unknown');
         if (in_array(0, $otherUserIds, true)) {

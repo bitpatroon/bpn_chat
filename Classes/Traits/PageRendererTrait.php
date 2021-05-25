@@ -51,6 +51,11 @@ trait PageRendererTrait
         return $this->pageRenderer;
     }
 
+    protected function addCSSFile(string $fileRelativeToPublicRoot)
+    {
+        $this->getPageRenderer()->addCssFile($fileRelativeToPublicRoot);
+    }
+
     protected function addJsFooterFile(string $fileRelativeToPublicRoot)
     {
 

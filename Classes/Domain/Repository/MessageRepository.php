@@ -108,7 +108,7 @@ class MessageRepository extends Repository
         $rows = $this->linkSenderReceivers($rows, $userIds, $otherUserIds);
         $rows = $this->setResultIndexField($rows);
 
-        // $this->markMyMessageDelivered($rows, $userIds);
+        $this->markMyMessageDelivered($rows, $userIds);
 
         return $rows;
     }
@@ -134,7 +134,7 @@ class MessageRepository extends Repository
         $rows = $this->linkSenderReceivers($rows, $userIds, $otherUserIds);
         $rows = $this->setResultIndexField($rows);
 
-//        $this->markMyMessageDelivered($rows, $userIds);
+        $this->markMyMessageDelivered($rows, $userIds);
 
         return $rows;
     }

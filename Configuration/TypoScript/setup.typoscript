@@ -4,6 +4,8 @@ plugin.bpnchat_chat {
         pause_btn_enabled = {$plugin.bpnchat_chat.settings.pause_btn_enabled}
         administrator_name = {$plugin.bpnchat_chat.settings.administrator_name}
         administrator_name_translate = {$plugin.bpnchat_chat.settings.administrator_name_translate}
+        debug = 1
+        show_message_dates = {$plugin.bpnchat_chat.settings.show_message_dates}
     }
 }
 

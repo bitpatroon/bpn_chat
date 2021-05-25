@@ -18,51 +18,64 @@
           data-pause-btn-enabled="{pause_btn_enabled}"
           data-other-party="{receiver}"
           data-other-party-name="{otherPartyName}"
+          data-debug="{debug}"
     ></span>
-    <f:debug title="public\typo3conf\ext\bpn_chat\Resources\Private\Templates\Chat\Chat.html">{_all}</f:debug>
-
-    <f:form class="card"
+    <f:form class="{f:if(condition: '{show_date}', then: '', else:'state-no-date')}"
             action="addMessage"
             name="message"
             objectName="{message}"
             object="message">
-        <div class="card-header"><i class="fa fa-comments"></i>&nbsp;Chat <span class="btn btn-primary" data-action="pause">[pause]</span></div>
-        <ul class="list-group list-group-flush">
-            <li class="list-group-item">{otherPartyName}</li>
-            <f:variable name="last_day">0</f:variable>
-            <f:for each="{messages}"
-                   as="message">
-                <f:variable name="current_day">{f:format.date(date: message.crdate, format: 'd-m-Y')}</f:variable>
-                <f:if condition="{current_day} != {last_day}">
-                    <li class="list-group-item" data-caption="1">
-                        <h4 class="mt-4">{f:format.date(date: message.crdate, format: 'd-m-Y')}</h4>
-                    </li>
-                </f:if>
-                <f:variable name="sendByMe">{f:if(condition:'{message.sender.uid} == {current_user_id}', then:1, else:'')}</f:variable>
-                <li class="list-group-item" data-uid="{message.uid}">
-                    <f:render section="message"
-                              arguments="{sendByMe: sendByMe, message:message, otherPartyName:otherPartyName}"/>
-                </li>
-                <f:variable name="last_day">{f:format.date(date: message.crdate, format: 'd-m-Y')}</f:variable>
-            </f:for>
-            <li class="list-group-item" data-type="entry-form">
-                <div class="form-row">
-                    <div class="col">
-                        <f:form.textarea id="message"
-                                         name="message"
-                                         value=""
-                                         class="form-control"
-                                         property="message"
-                                         placeholder="{f:translate(key:'your_message_here')}"/>
-                    </div>
-                    <div class="md-col-2">
-                        <f:form.submit class="btn btn-primary"
-                                       name="send"
-                                       value="{f:translate(key:'send_message')}" />
+        <div class="card">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-md-9"><i class="fa fa-comments"></i>&nbsp;Chat : {otherPartyName}</div>
+                    <div class="col-md-3 text-right">
+                        <span data-action="pause"
+                              style="display: none">Pause:<i class="fa fa-toggle-on"
+                                                             data-on="fa fa-toggle-on"
+                                                             data-off="fa fa-toggle-off"></i></span>
+                        <span data-action="show_date" data-show-date="{show_date}"
+                              style="display: none">Date:<i class="fa fa-toggle-on"
+                                                             data-on="fa fa-toggle-on"
+                                                             data-off="fa fa-toggle-off"></i></span>
                     </div>
                 </div>
-            </li>
-        </ul>
+            </div>
+
+            <ul class="list-group list-group-flush chat-messages">
+                <f:variable name="last_day">0</f:variable>
+                <f:for each="{messages}"
+                       as="message">
+                    <f:variable name="current_day">{f:format.date(date: message.crdate, format: 'd-m-Y')}</f:variable>
+                    <f:if condition="{current_day} != {last_day}">
+                        <li class="list-group-item" data-caption="1">
+                            <strong>{f:format.date(date: message.crdate, format: 'd-m-Y')}</strong>
+                        </li>
+                    </f:if>
+                    <f:variable name="sendByMe">{f:if(condition:'{message.sender.uid} == {current_user_id}', then:1, else:'')}</f:variable>
+                    <li class="list-group-item" data-uid="{message.uid}">
+                        <f:render section="message"
+                                  arguments="{sendByMe: sendByMe, message:message, otherPartyName:otherPartyName}"/>
+                    </li>
+                    <f:variable name="last_day">{f:format.date(date: message.crdate, format: 'd-m-Y')}</f:variable>
+                </f:for>
+            </ul>
+        </div>
+        <div class="form-row">
+            <div class="col">
+                <f:form.textarea id="message"
+                                 name="message"
+                                 value=""
+                                 class="form-control"
+                                 property="message"
+                                 placeholder="{f:translate(key:'your_message_here')}"/>
+            </div>
+            <div class="md-col-2">
+                <f:form.submit class="btn btn-primary"
+                               name="send"
+                               value="{f:translate(key:'send_message')}" />
+            </div>
+        </div>
         <f:form.hidden name="receiver" value="{receiver}"/>
         <template class="iamsender">
             <f:render section="message" arguments="{sendByMe: 1}"/>
@@ -82,7 +95,7 @@
                     <f:format.html>{message.message}</f:format.html>
                 </div>
             </div>
-            <div class="row">
+            <div class="row message-row-info">
                 <div class="col-12 text-right">
                     <small><span data-field="date">{f:format.date(date: message.crdate, format: 'd-m-Y H:i')}</span> |
                         <f:variable name="yourName"><f:translate key="you"/></f:variable>
@@ -100,7 +113,7 @@
                 </div>
                 <div class="col-3"></div>
             </div>
-            <div class="row">
+            <div class="row message-row-info">
                 <div class="col-12 text-left"><small><span data-field="date">{f:format.date(date: message.crdate, format: 'd-m-Y H:i')}</span> |
                     <span data-field="name">{otherPartyName}</span></small>
                 </div>

@@ -1,0 +1,46 @@
+.tx-bpnchat {
+    max-width: 500px;
+
+    .chat-messages {
+        max-height: 600px;
+        overflow-y: scroll;
+
+        .list-group-item {
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .list-group-item[data-uid] {
+            border: none;
+            padding-bottom: 2px;
+        }
+
+        .list-group-item[data-caption] {
+            padding-top: 6px;
+            padding-bottom: 2px;
+            text-align: center;
+        }
+
+        p {
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+    }
+
+    .form-row {
+        margin: 20px auto;
+    }
+
+    [data-action="pause"] {
+        cursor: pointer;
+    }
+
+    .message-row-info {
+        color: #999999;
+        font-size: 0.8rem;
+    }
+
+    .state-no-date .message-row-info {
+        display: none;
+    }
+}

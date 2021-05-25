@@ -4,5 +4,6 @@ plugin.bpnchat_chat {
         pause_btn_enabled = 0
         administrator_name = admin.name
         administrator_name_translate = 1
+        show_message_dates = 1
     }
 }

@@ -9,7 +9,7 @@
       </trans-unit>
       <trans-unit id="send_message" xml:space="preserve">
         <source>Send</source>
-        <target>Verzender</target>
+        <target>Verzenden</target>
       </trans-unit>
       <trans-unit id="not_allowed" xml:space="preserve">
         <source>Chatting is only allowed when logged in.</source>
