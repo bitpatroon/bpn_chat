@@ -1,4 +1,4 @@
-(function () {
+function bpnChat() {
 
     var $ = $ || window.$;
     var settings = { urls: { get: '', getNew: '' }, autoUpdateInterval: 0, you: -1, amAdmin: -1 };
@@ -165,8 +165,9 @@
             submitIsOnline();
         });
 
-        $chatApplicationElement.find('textarea.message-input').keyup(function (e) {
-            if (e.originalEvent.keyCode === 13 && e.originalEvent.ctrlKey === true) {
+        $chatApplicationElement.find('textarea.message-input').keyup(function (event) {
+            event.preventDefault();
+            if (event.originalEvent.keyCode === 13 && event.originalEvent.ctrlKey === true) {
                 submitMessages($chatApplicationElement);
             }
         });
@@ -349,4 +350,6 @@
 
         waitForJQuery(initChatApplications);
     });
-})();
+};
+
+bpnChat();
