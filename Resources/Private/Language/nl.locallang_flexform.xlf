@@ -8,8 +8,12 @@
         <target>Algemeen</target>
       </trans-unit>
       <trans-unit id="receivers" xml:space="preserve">
-        <source>Receivers</source>
-        <target>Ontvangers</target>
+        <source>Administrators</source>
+        <target>Beheerders</target>
+      </trans-unit>
+      <trans-unit id="tilesprerow" xml:space="preserve">
+        <source>Tiles per row (Chat select)</source>
+        <target>Tegels per rij (Chat select)</target>
       </trans-unit>
     </body>
   </file>

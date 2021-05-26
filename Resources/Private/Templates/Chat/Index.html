@@ -6,12 +6,19 @@
 <f:layout name="Default"/>
 
 <f:section name="main">
+    <f:variable name="cols"><f:switch expression="{settings.tilesprerow}">
+        <f:case value="2">col-md-6</f:case>
+        <f:case value="3">col-md-4</f:case>
+        <f:case value="4">col-md-3</f:case>
+        <f:defaultCase>col-md-12</f:defaultCase>
+    </f:switch></f:variable>
+    <f:debug title="public\typo3conf\ext\bpn_chat\Resources\Private\Templates\Chat\Index.html">{cols}</f:debug>
     <f:if condition="{chats}">
         <f:then>
             <div class="row">
                 <f:for each="{chats}"
                        as="chat">
-                    <div class="col-md-3">
+                    <div class="{cols}">
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title"><f:translate key="chat.conversation" /></h5>

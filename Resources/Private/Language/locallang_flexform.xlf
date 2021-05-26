@@ -7,7 +7,10 @@
         <source>General</source>
       </trans-unit>
       <trans-unit id="receivers" xml:space="preserve">
-        <source>Receivers</source>
+        <source>Administrators</source>
+      </trans-unit>
+      <trans-unit id="tilesprerow" xml:space="preserve">
+        <source>Tiles per row (Chat select)</source>
       </trans-unit>
     </body>
   </file>
