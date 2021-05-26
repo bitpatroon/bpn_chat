@@ -1,4 +1,5 @@
-function bpnChat() {
+function bpnChat()
+{
 
     var $ = $ || window.$;
     var settings = { urls: { get: '', getNew: '' }, autoUpdateInterval: 0, you: -1, amAdmin: -1 };
@@ -341,15 +342,12 @@ function bpnChat() {
 
     document.addEventListener('DOMContentLoaded', function () {
         if (window.bpn_chat) {
-            if (settings.debug) {
                 console.log('bpn_chat is already intialised by another instance. Stopping.');
             }
-            return;
-        }
         window.bpn_chat = 1;
 
         waitForJQuery(initChatApplications);
     });
-};
+}
 
 bpnChat();

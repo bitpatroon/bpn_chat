@@ -342,4 +342,28 @@ class MessageRepository extends Repository
         return $query->execute();
     }
 
+    public function getMessageCountSince(int $userId, int $lastTimeStamp): int
+    {
+        $table = self::TABLE;
+        /** @var QueryBuilder $queryBuilder */
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
+
+        $rows = $queryBuilder
+            ->select('uid')
+            ->from($table)
+            ->where(
+                $queryBuilder->expr()->eq('receivers', $userId),
+                $queryBuilder->expr()->gt('crdate', $lastTimeStamp),
+            )
+            ->setMaxResults(50)
+            ->execute()
+            ->fetchAllAssociative();
+
+        if($rows){
+            return count($rows);
+        }
+        return 0;
+    }
+
 }

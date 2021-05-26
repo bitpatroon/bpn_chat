@@ -33,6 +33,7 @@ use BPN\BpnChat\Domain\Repository\OnlineRepository;
 use BPN\BpnChat\Traits\AuthorizationServiceTrait;
 use BPN\BpnChat\Traits\FrontEndUserTrait;
 use BPN\BpnChat\Traits\LanguageTrait;
+use BPN\BpnChat\Traits\MessageRepositoryTrait;
 use BPN\BpnChat\Traits\OnlineRepositoryTrait;
 use BPN\BpnChat\Traits\PersistenceManagerTrait;
 use BPN\BpnChat\Traits\SecureLinkTrait;
@@ -51,6 +52,7 @@ class Start
     use OnlineRepositoryTrait;
     use PersistenceManagerTrait;
     use SecureLinkTrait;
+    use MessageRepositoryTrait;
 
     const FAILURE = 'failure';
 
@@ -68,6 +70,10 @@ class Start
                         $you = (int) $this->getRequiredArgument('you');
                         $others = $this->getRequiredArgument('other');
                         $result['status'] = $this->getOtherIsOnline($you, $others);
+                        break;
+                    } elseif ($operation === 'check') {
+                        $you = (int) $this->getRequiredArgument('you');
+                        $result['check'] = $this->checkForNewMessages($you);
                         break;
                     }
                     $you = $this->getRequiredArgument('you');
@@ -110,15 +116,11 @@ class Start
 
     private function getNewChatMessages(string $userId, string $others, int $newerThanUid = 0): JsonResponse
     {
-        /** @var MessageRepository $messageRepository */
-        $messageRepository = GeneralUtility::makeInstance(ObjectManager::class)
-            ->get(MessageRepository::class);
-
         $senderIds = GeneralUtility::intExplode(',', $userId);
         $otherUserIds = GeneralUtility::intExplode(',', $others);
 
         $result = [];
-        $result['messages'] = $messageRepository->getNewMessages($senderIds, $otherUserIds, $newerThanUid);
+        $result['messages'] = $this->getMessageRepository()->getNewMessages($senderIds, $otherUserIds, $newerThanUid);
         $result['count'] = count($result['messages']);
 
         return new JsonResponse($result);
@@ -239,5 +241,14 @@ class Start
         }
 
         return OnlineRepository::ONLINE_YES;
+    }
+
+    private function checkForNewMessages(int $you): int
+    {
+        // Check when last seen the chat
+        $lastOnlineRecord = $this->getOnlineRepository()->getOnline($you);
+        $lastTimeStamp = $lastOnlineRecord['online'];
+
+        return $this->getMessageRepository()->getMessageCountSince($you, $lastTimeStamp);
     }
 }
