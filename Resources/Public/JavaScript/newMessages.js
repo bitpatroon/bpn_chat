@@ -49,6 +49,8 @@ function bpnChatNewMessages()
                     document.location.href = settings.pluginPage;
                 });
             }
+        } else {
+            messagesAlertBox.find('.messages').html(countText);
         }
         messagesAlertBox.show();
         messagesAlertBox.animate({ bottom: 10, opacity: 1 }, function () {
@@ -96,7 +98,7 @@ function bpnChatNewMessages()
 
     function checkForMessages()
     {
-        if($('.tx-bpnchat-chat').length > 0){
+        if($('.tx-bpnchat-chat .message-input').length > 0){
             console.log('newMessages.js:1622445156835:', 'Stop checking messages. Chat plugin function found on page');
             return
         }

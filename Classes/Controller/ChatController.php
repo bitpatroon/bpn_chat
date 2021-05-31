@@ -36,6 +36,7 @@ use BPN\BpnChat\Traits\LanguageTrait;
 use BPN\BpnChat\Traits\MessageRepositoryTrait;
 use BPN\BpnChat\Traits\MessageServiceTrait;
 use BPN\BpnChat\Traits\NameServiceTrait;
+use BPN\BpnChat\Traits\OnlineRepositoryTrait;
 use BPN\BpnChat\Traits\PageRendererTrait;
 use BPN\BpnChat\Traits\PersistenceManagerTrait;
 use BPN\BpnChat\Traits\SecureLinkTrait;
@@ -50,6 +51,7 @@ class ChatController extends ActionController
     use FrontEndUserTrait;
     use MessageRepositoryTrait;
     use MessageServiceTrait;
+    use OnlineRepositoryTrait;
     use PersistenceManagerTrait;
     use PageRendererTrait;
     use LanguageTrait;
@@ -89,6 +91,9 @@ class ChatController extends ActionController
         $chatIds = $this->messageRepository->getChatPartnerIds($me, $notBeforeTimeStamp);
         $chatIds = $this->addAdmins($chatIds);
 
+        $iWasLastOnline = $this->onlineRepository->getOnline($me);
+        $lastOnline = (int) $iWasLastOnline['online'];
+
         $chatUsers = $this->frontEndUserRepository->findAllByUid(array_keys($chatIds));
         $chats = [];
         foreach ($chatIds as $userId => $chatCrDate) {
@@ -98,11 +103,13 @@ class ChatController extends ActionController
             if (!isset($chatUsers[$userId])) {
                 continue;
             }
-
-            $chats[] = [
+            $chatData = [
                 'chat' => ['crdate' => $chatCrDate],
                 'user' => ['uid' => $userId, 'username' => $chatUsers[$userId]->getUsername()],
+                'new' => ($chatCrDate > $lastOnline)
             ];
+
+            $chats[] = $chatData;
         }
 
         $this->view->assign('chats', $chats);
@@ -132,10 +139,10 @@ class ChatController extends ActionController
 
         // Retrieve all messages of userA with userB with user A = self
         $messages = $this->messageRepository->getLastMessages($senderIds, $otherUserIds);
-        foreach($messages as &$message){
-            if ($message['sender']['name'] === $myDefaultName){
+        foreach ($messages as &$message) {
+            if ($message['sender']['name'] === $myDefaultName) {
                 $message['sender']['name'] = $myName;
-            } else if ($isAdmin && $message['sender']['uid'] === 0){
+            } elseif ($isAdmin && $message['sender']['uid'] === 0) {
                 $message['sender']['name'] = $myName;
             }
         }
@@ -167,9 +174,11 @@ class ChatController extends ActionController
         $this->view->assign('postLink', $this->getUrl('post', $otherIdsList));
 
         $this->view->assign(
-            'offlineMessage', $isAdmin
-            ? $this->bpnChatConfiguration->getOfflineMessageForUser()
-            : $this->bpnChatConfiguration->getOfflineMessage());
+            'offlineMessage',
+            $isAdmin
+                ? $this->bpnChatConfiguration->getOfflineMessageForUser()
+                : $this->bpnChatConfiguration->getOfflineMessage()
+        );
     }
 
     public function addMessageAction(Message $message, int $receiver = 0, bool $redirect = true)

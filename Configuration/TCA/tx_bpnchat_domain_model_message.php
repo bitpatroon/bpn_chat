@@ -14,6 +14,7 @@ return [
         'enablecolumns' => [
             'disabled' => 'hidden',
         ],
+        'rootLevel' => -1,
         'iconfile' => 'EXT:bpn_chat/ext_icon.png',
     ],
     'interface' => [

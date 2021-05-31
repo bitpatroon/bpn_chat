@@ -23,7 +23,8 @@
                                 <h5 class="card-title"><f:translate key="chat.conversation" /></h5>
                                 <h6 class="card-subtitle mb-2 text-muted">{chat.user.name}</h6>
                                 <p class="card-text"><small><f:translate key="chat.user.username" />:<br />{chat.user.username}</small></p>
-                                <p class="card-text"><small><f:translate key="chat.last.message" />:<br /><f:format.date format="d-m-Y H:i">{chat.chat.crdate}</f:format.date></small></p>
+                                <p class="card-text"><small><f:translate key="chat.last.message" />:<br /><f:format.date format="d-m-Y H:i">{chat.chat.crdate}</f:format.date>
+                                    <f:if condition="{chat.new}"><span class="badge badge-info">NIEUW</span></f:if></small></p>
                                 <f:link.action class="card-link"
                                                action="chat"
                                                arguments="{otherUserId: chat.user.uid }">Open</f:link.action>

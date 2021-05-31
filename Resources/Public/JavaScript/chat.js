@@ -164,6 +164,7 @@ function bpnChat()
             settings.allowUpdate = 0;
             document.title = settings.windowTitle;
             submitIsOnline();
+            handleIsOtherOnline($chatApplicationElement);
         });
 
         $chatApplicationElement.find('textarea.message-input').keyup(function (event) {
