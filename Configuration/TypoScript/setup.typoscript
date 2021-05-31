@@ -23,10 +23,43 @@ plugin.bpnchat_chat {
 
         # Message is displayed to an admin when the user is offline.
         offlineMessageForUser = {$plugin.bpnchat_chat.settings.offlineMessageForUser}
+
+        # notification on all pages
+        notification = {$plugin.bpnchat_chat.settings.notification}
+
+        # fadeout messages notification after X seconds
+        notification.fadeout = {$plugin.bpnchat_chat.settings.notification.fadeout}
+        notification.fadeout.after = {$plugin.bpnchat_chat.settings.notification.fadeout.after}
+
+        # The page or url with the chat control (/index.php?id=<pageid>)
+        notification.page = {$plugin.bpnchat_chat.settings.notification.page}
+
+        # play a sound upon a new message
+        notification.audio = {$plugin.bpnchat_chat.settings.notification.audio}
+        notification.audio.file = {$plugin.bpnchat_chat.settings.notification.audio.file}
+        notification.audio.files {
+            1 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/alert.mp3
+            2 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/appointed.mp3
+            3 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/communication.mp3
+            4 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/confident.mp3
+            5 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/deduction.mp3
+            6 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/definite.mp3
+            7 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/hold-on.mp3
+            8 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/light.mp3
+            9 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/open-up.mp3
+            10 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/plucky.mp3
+            11 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/point-blank.mp3
+            12 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/pristine.mp3
+            13 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/swiftly.mp3
+            14 = /typo3conf/ext/bpn_chat/Resources/Public/Audio/when.mp3
+        }
+
+        # check every X seconds > 30
+        notification.check = {$plugin.bpnchat_chat.settings.notification.check}
     }
 }
 
-lib.userid  = TEXT
+lib.userid = TEXT
 lib.userid.data = TSFE:fe_user|user|uid
 
 lib.user_friendlyname = USER_INT
@@ -35,5 +68,30 @@ lib.user_friendlyname.userFunc = BPN\BpnChat\UserFunctions\FirendlyUserName->ren
 page.includeJSFooter.bpn_chat_newMessages = EXT:bpn_chat/Resources/Public/JavaScript/newMessages.js
 page.includeCSS.bpn_chat_newMessages = EXT:bpn_chat/Resources/Public/CSS/newmessages.css
 
-page.1622057408 < lib.userid
-page.1622057408.wrap = <span data-plugin="bpn-chat" data-id="|" style="display:none"></span>
+page.1622057408 = COA
+page.1622057408 {
+
+    10 < lib.userid
+    10.noTrimWrap = | data-id="|"|
+
+    20 = TEXT
+    20.value < plugin.bpnchat_chat.settings.notification.audio.file
+    20.if.isTrue < plugin.bpnchat_chat.settings.notification.audio
+    20.noTrimWrap = | data-audio="|"|
+
+    30 = TEXT
+    30.value < plugin.bpnchat_chat.settings.notification.fadeout.after
+    30.if.isTrue < plugin.bpnchat_chat.settings.notification.fadeout
+    30.noTrimWrap = | data-fadeout="|"|
+
+    40 = TEXT
+    40.value < plugin.bpnchat_chat.settings.notification.check
+    40.noTrimWrap = | data-check="|"|
+
+    50 = TEXT
+    50.value < plugin.bpnchat_chat.settings.notification.page
+    50.noTrimWrap = | data-plugin-page="|"|
+
+    stdWrap.noTrimWrap = |<span data-plugin="bpn-chat" style="display:none" |></span>|
+    stdWrap.if.isTrue < plugin.bpnchat_chat.settings.notification
+}

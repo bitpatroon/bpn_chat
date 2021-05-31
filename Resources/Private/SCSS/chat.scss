@@ -1,7 +1,13 @@
 .tx-bpnchat {
 
-    &.chat-action{
-        max-width: 500px;
+    [data-row-id="buttons"] {
+        visibility: hidden;
+    }
+
+    &.initialized {
+        [data-row-id="buttons"] {
+            visibility: visible;
+        }
     }
 
     .chat-messages {

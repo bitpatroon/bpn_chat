@@ -146,7 +146,7 @@ function bpnChat()
             url: targetUrl
         }).done(function (data) {
             if (settings.othersOnlineState === 0) {
-                message =  '<div class="alert alert-warning">' + settings.offlineMessage + '</div>' + message;
+                message = '<div class="alert alert-warning">' + settings.offlineMessage + '</div>' + message;
             }
 
             var messageObj = getMessageObj(settings.you, message);
@@ -234,6 +234,8 @@ function bpnChat()
                 clearTimeout(getNewMessagesTimer);
             }
         }, interval);
+
+        $chatApplicationElement.addClass('initialized');
     }
 
     function initButtons($chatApplicationElement)
@@ -342,8 +344,8 @@ function bpnChat()
 
     document.addEventListener('DOMContentLoaded', function () {
         if (window.bpn_chat) {
-                console.log('bpn_chat is already intialised by another instance. Stopping.');
-            }
+            console.log('bpn_chat is already intialised by another instance. Stopping.');
+        }
         window.bpn_chat = 1;
 
         waitForJQuery(initChatApplications);

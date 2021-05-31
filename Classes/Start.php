@@ -71,11 +71,14 @@ class Start
                         $others = $this->getRequiredArgument('other');
                         $result['status'] = $this->getOtherIsOnline($you, $others);
                         break;
-                    } elseif ($operation === 'check') {
+                    }
+
+                    if ($operation === 'check') {
                         $you = (int) $this->getRequiredArgument('you');
                         $result['check'] = $this->checkForNewMessages($you);
                         break;
                     }
+
                     $you = $this->getRequiredArgument('you');
                     $others = $this->getRequiredArgument('other');
                     $lastUid = (int) $this->getRequiredArgument('uid');

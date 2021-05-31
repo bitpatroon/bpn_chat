@@ -8,5 +8,5 @@ services:
     BPN\BpnChat\:
         resource: '../Classes/*'
 
-    BPN\BpnChat\Domain\Repository\FrontendUserRepository:
+    BPN\BpnChat\Domain\Repository\FrontEndUserRepository:
         public: true

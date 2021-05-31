@@ -124,7 +124,7 @@ class ChatController extends ActionController
         $myDefaultName = $this->getNameService()->getUserUnkown($userId);
         $myName = $this->getNameService()->getFullName($userId, false);
         if (!$myName) {
-            $myName = $this->translate('you');
+            $myName = $this->translate('chat.you');
         }
 
         $otherIdsList = implode(',', $otherUserIds);

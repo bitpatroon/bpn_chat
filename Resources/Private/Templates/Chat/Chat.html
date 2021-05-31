@@ -45,8 +45,8 @@
                                                              data-off="fa fa-toggle-off"></i></span>
                         <span data-action="show_date" data-show-date="{show_date}"
                               style="display: none">Info:<i class="fa fa-toggle-on"
-                                                             data-on="fa fa-toggle-on"
-                                                             data-off="fa fa-toggle-off"></i></span>
+                                                            data-on="fa fa-toggle-on"
+                                                            data-off="fa fa-toggle-off"></i></span>
                     </div>
                 </div>
             </div>
@@ -70,7 +70,7 @@
                 </f:for>
             </ul>
         </div>
-        <div class="form-row">
+        <div class="form-row" data-row-id="buttons">
             <div class="col">
                 <f:form.textarea name="message"
                                  value=""
@@ -106,11 +106,7 @@
             <div class="row message-row-info">
                 <div class="col-12 text-right">
                     <small><span data-field="date">{f:format.date(date: message.crdate, format: 'd-m-Y H:i')}</span> |
-                        <f:variable name="yourName"><f:translate key="you"/></f:variable>
-                        <span data-field="name"><chat:friendlyUserName
-                            user="{message.sender}"
-                            fallback="{'admin' : settings.receivers}"
-                            fallbackifself="{yourName}" /></span></small>
+                        <f:translate key="chat.you"/>
                 </div>
             </div>
         </f:then>

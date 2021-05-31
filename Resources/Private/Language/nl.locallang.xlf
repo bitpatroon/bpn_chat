@@ -20,7 +20,7 @@
         <source>This plugin is not configured correctly. It is lacking the default receivers.</source>
         <target>De plugin is niet correct geconfigureerd. Er zijn geen standaard ontvangers ingesteld.</target>
       </trans-unit>
-      <trans-unit id="you" xml:space="preserve">
+      <trans-unit id="chat.you" xml:space="preserve">
         <source>You</source>
         <target>U</target>
       </trans-unit>

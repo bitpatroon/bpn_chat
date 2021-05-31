@@ -8,5 +8,15 @@ plugin.bpnchat_chat {
         # Message is displayed when otherside of the chat is offline; html is allowed!
         offlineMessage = Thank you for your message<br />Sorry, but we're offline. We will respond at the first occasion.
         offlineMessageForUser = The user is now offline. The message is delivered.
+
+        notification = 1
+        notification.fadeout = 1
+        notification.fadeout.after = 10
+        notification.audio = 1
+        notification.audio.file = /typo3conf/ext/bpn_chat/Resources/Public/Audio/definite.mp3
+
+        notification.check = 30
+
+        notification.page =
     }
 }

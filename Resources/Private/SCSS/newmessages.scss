@@ -21,4 +21,12 @@
         line-height: 30px;
         border: solid 2px #000;
     }
+
+    &.clickable {
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
 }
