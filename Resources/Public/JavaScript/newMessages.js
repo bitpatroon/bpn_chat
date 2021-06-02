@@ -5,14 +5,11 @@ function bpnChatNewMessages()
 
     function playSoundOnNotification()
     {
-
-        console.log('newMessages.js:1622447281904:', 'playSoundOnNotification');
         if (!settings.audioUrl) {
             return;
         }
 
         // todo: check for js permission to play audio
-
         if (!window.bpnChatNotification) {
             window.bpnChatNotification = new Audio(settings.audioUrl);
             window.bpnChatNotification.addEventListener('loadeddata', function () {

@@ -87,6 +87,12 @@ class ChatController extends ActionController
     {
         $me = $this->authorizationService->getUserId();
 
+        $iAmAdmin = $this->bpnChatConfiguration->userIsAnAdmin($me);
+        if(!$iAmAdmin){
+            $this->forward('chat');
+            return;
+        }
+
         $notBeforeTimeStamp = strtotime('-1 month');
         $chatIds = $this->messageRepository->getChatPartnerIds($me, $notBeforeTimeStamp);
         $chatIds = $this->addAdmins($chatIds);
@@ -113,20 +119,23 @@ class ChatController extends ActionController
         }
 
         $this->view->assign('chats', $chats);
-        $this->view->assign('isadmin', $this->bpnChatConfiguration->userIsAnAdmin($me) ? 1 : 0);
+        $this->view->assign('isadmin', $iAmAdmin ? 1 : 0);
     }
 
     public function chatAction(int $otherUserId = 0)
     {
         $userId = $this->authorizationService->getUserId();
-        $senderIds = $this->messageService->getUserIds($userId);
-        $otherUserIds = [$otherUserId];
-        if ($otherUserId == 0) {
-            $admins = $this->bpnChatConfiguration->getReceiverIds();
-            $otherUserIds = array_merge($otherUserIds, $admins);
+        $iAmAdmin = $this->bpnChatConfiguration->userIsAnAdmin($userId);
+        if ($iAmAdmin){
+            $senderIds = $this->bpnChatConfiguration->getAdminIds();
+            $otherUserIds = [$otherUserId => $otherUserId];
+        } else {
+            $senderIds = [$userId];
+            $otherUserIds = $this->bpnChatConfiguration->getAdminIds();
+            $otherUserIds[$otherUserId] = $otherUserId;
         }
 
-        $otherUserIds = $this->messageService->getUserIds($otherUserIds);
+//        $otherUserIds = $this->messageService->getUserIds($otherUserIds);
 
         $myDefaultName = $this->getNameService()->getUserUnkown($userId);
         $myName = $this->getNameService()->getFullName($userId, false);
@@ -135,14 +144,14 @@ class ChatController extends ActionController
         }
 
         $otherIdsList = implode(',', $otherUserIds);
-        $isAdmin = in_array($userId, $this->bpnChatConfiguration->getReceiverIds());
+//        $isAdmin = in_array($userId, $this->bpnChatConfiguration->getAdminIds());
 
         // Retrieve all messages of userA with userB with user A = self
         $messages = $this->messageRepository->getLastMessages($senderIds, $otherUserIds);
         foreach ($messages as &$message) {
             if ($message['sender']['name'] === $myDefaultName) {
                 $message['sender']['name'] = $myName;
-            } elseif ($isAdmin && $message['sender']['uid'] === 0) {
+            } elseif ($iAmAdmin && $message['sender']['uid'] === 0) {
                 $message['sender']['name'] = $myName;
             }
         }
@@ -152,7 +161,7 @@ class ChatController extends ActionController
         $this->view->assign('receiver', $otherIdsList);
         $this->view->assign('urlget', $this->getUrl('get', $otherIdsList));
         $this->view->assign('autoUpdateInterval', $this->bpnChatConfiguration->getAutoUpdateInterval());
-        $this->view->assign('isAdmin', $isAdmin ? 1 : 0);
+        $this->view->assign('youAreAdmin', $iAmAdmin ? 1 : 0);
         $this->view->assign('pause_btn_enabled', $this->bpnChatConfiguration->getPauseBtnEnabled() ? 1 : 0);
         $this->view->assign('debug', $this->bpnChatConfiguration->getDebug() ? 1 : 0);
         $this->view->assign('show_date', $this->bpnChatConfiguration->getShowDate() ? 1 : 0);
@@ -175,7 +184,7 @@ class ChatController extends ActionController
 
         $this->view->assign(
             'offlineMessage',
-            $isAdmin
+            $iAmAdmin
                 ? $this->bpnChatConfiguration->getOfflineMessageForUser()
                 : $this->bpnChatConfiguration->getOfflineMessage()
         );
@@ -192,7 +201,7 @@ class ChatController extends ActionController
                 $message->addReceiver($receiverUser);
                 // allow adding sys admins in general
             } else {
-                $receivers = $this->bpnChatConfiguration->getReceivers();
+                $receivers = $this->bpnChatConfiguration->getAdminIds();
                 if (!$receivers) {
                     $this->error('no_receivers_set', 1620811702, true);
 

@@ -47,7 +47,7 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
     /**
      * @var string
      */
-    protected $receivers;
+    protected $adminIds;
 
     /** @var int */
     protected $autoUpdateInterval = 0;
@@ -81,7 +81,7 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
      */
     protected function initializeApplication($settings)
     {
-        $this->receivers = $this->getRequiredValueFromSettings(
+        $this->adminIds = $this->getRequiredValueFromSettings(
             $settings,
             'receivers',
             'Please set default receivers for this plugin.',
@@ -133,12 +133,12 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
     /**
      * @return \BPN\BpnChat\Domain\Model\FrontEndUser[]
      */
-    public function getReceivers()
+    public function getAdmins()
     {
         if (null === $this->receiverModels) {
-            $receivers = GeneralUtility::intExplode(',', $this->receivers);
+            $receivers = GeneralUtility::intExplode(',', $this->adminIds);
 
-            $this->receiverModels = !$this->receivers
+            $this->receiverModels = !$this->adminIds
                 ? []
                 : $this->getFrontEndUserRepository()->getUsersByIds($receivers);
         }
@@ -149,9 +149,22 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
     /**
      * @return int[]
      */
+    public function getAdminIds()
+    {
+        $ids = GeneralUtility::intExplode(',', $this->adminIds);
+        $ids = array_combine($ids, $ids);
+        $ids[0] = 0;
+
+        return $ids;
+    }
+
+    /**
+     * @return int[]
+     * @deprecated use \BPN\BpnChat\Configuration\BpnChatConfiguration::getAdminIds
+     */
     public function getReceiverIds()
     {
-        return GeneralUtility::intExplode(',', $this->receivers);
+        return GeneralUtility::intExplode(',', $this->adminIds);
     }
 
     public function getAutoUpdateInterval()
@@ -161,9 +174,9 @@ class BpnChatConfiguration extends AbstractExtensionConfiguration
 
     public function userIsAnAdmin(int $userId): bool
     {
-        $receiverIds = $this->getReceiverIds();
+        $adminIds = $this->getAdminIds();
 
-        return in_array($userId, $receiverIds);
+        return in_array($userId, $adminIds);
     }
 
     public function getPauseBtnEnabled(): int

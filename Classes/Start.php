@@ -204,13 +204,21 @@ class Start
     private function setOnline(int $you, string $others)
     {
         $otherIds = GeneralUtility::intExplode(',', $others);
-        $otherId = 0;
-        foreach ($otherIds as $id) {
-            if (!$id) {
-                continue;
-            }
-            $otherId = $id;
+        $youAreAdmin = in_array(0, $otherIds) ? false : true;
+        if($youAreAdmin){
+            $you = 0;
+            $otherId = current($otherIds);
+        } else {
+            $otherId = 0;
         }
+
+//        $otherId = 0;
+//        if($otherIds && is_array($otherIds)){
+//            if(!in_array(0, $otherIds)){
+//                $otherId = current($otherIds);
+//                $otherId = (int)$otherId;
+//            }
+//        }
 
         $this->getOnlineRepository()->setOnline($you, $otherId);
 
@@ -220,12 +228,12 @@ class Start
     private function getOtherIsOnline(int $you, $others): int
     {
         $otherIds = GeneralUtility::intExplode(',', $others);
-        $otherId = 0;
-        foreach ($otherIds as $id) {
-            if (!$id) {
-                continue;
-            }
-            $otherId = $id;
+        $youAreAdmin = in_array(0, $otherIds) ? false : true;
+        if($youAreAdmin){
+            $you = 0;
+            $otherId = current($otherIds);
+        } else {
+            $otherId = 0;
         }
 
         $onLineRecord = $this->getOnlineRepository()->getOnline($otherId);
@@ -248,9 +256,16 @@ class Start
 
     private function checkForNewMessages(int $you): int
     {
+        $lastTimeStamp = 0;
+
         // Check when last seen the chat
         $lastOnlineRecord = $this->getOnlineRepository()->getOnline($you);
-        $lastTimeStamp = $lastOnlineRecord['online'];
+        if($lastOnlineRecord && $lastOnlineRecord['online']){
+            $lastTimeStamp = (int)$lastOnlineRecord['online'];
+            if(!$lastTimeStamp){
+                $lastTimeStamp = 0;
+            }
+        }
 
         return $this->getMessageRepository()->getMessageCountSince($you, $lastTimeStamp);
     }

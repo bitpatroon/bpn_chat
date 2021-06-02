@@ -60,7 +60,7 @@ class MessageService
 
     private function isAdmin(int $userId)
     {
-        $receiverIds = $this->bpnChatConfiguration->getReceiverIds();
+        $receiverIds = $this->bpnChatConfiguration->getAdminIds();
 
         return in_array($userId, $receiverIds);
     }
